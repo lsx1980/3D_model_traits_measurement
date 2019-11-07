@@ -1,3 +1,17 @@
+"""
+Version: 1.0
+
+Summary: calculte slicing direction of point cloud 
+
+Author: suxing liu
+
+Author-email: suxingliu@gmail.com
+
+USAGE
+
+from pointcloud.perspective import Perspective
+
+"""
 
 class Perspective:
     

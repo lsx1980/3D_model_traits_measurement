@@ -1,3 +1,18 @@
+"""
+Version: 1.0
+
+Summary: extract point cloud data from ply file
+
+Author: suxing liu
+
+Author-email: suxingliu@gmail.com
+
+USAGE
+
+from pointcloud.filedataextractor import FileDataExtractor 
+
+"""
+
 from pointcloud.pointmap import PointMap
 
 END_HEADER_VALUE = "end_header"

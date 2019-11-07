@@ -10,7 +10,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python frame_interpolation_phase.py -p /home/suxingliu/model-scan/model-data/test/ -n_frames 10
+python3 frame_interpolation_phase.py -p /home/suxingliu/ply_data/cross_section_scan/ -n_frames 10
 
 
 argument:
@@ -26,7 +26,8 @@ argument:
 # Standard Libraries
 
 import numpy as np
-from scipy import misc
+import imageio
+
 import argparse
 import time
 from matplotlib import pyplot as plt
@@ -38,7 +39,9 @@ from frame_interp import interpolate_frame
 import sys
 import os,fnmatch,os.path
 import glob
-from itertools import tee, izip
+from itertools import tee
+import itertools
+zip = getattr(itertools, 'izip', zip)
 
 import multiprocessing
 from multiprocessing import Pool
@@ -79,7 +82,7 @@ def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
     
-    return izip(a, b)
+    return zip(a, b)
     
     
 def frame_interpolation(imgList_pair):
@@ -93,8 +96,8 @@ def frame_interpolation(imgList_pair):
         print("proceeesing image pair: " + v + " & " + w + "\n")
         
         #load image pairs
-        img1 = misc.imread(current_path + v)
-        img2 = misc.imread(current_path + w)
+        img1 = imageio.imread(current_path + v)
+        img2 = imageio.imread(current_path + w)
         
         #generate interpolation images
         new_frames = interpolate_frame(img1, img2, n_frames = args["n_frames"], scale = .5**.25, xp = xp)
@@ -104,13 +107,13 @@ def frame_interpolation(imgList_pair):
             
             save_name = save_path + filename + '_'+ str(j) +'.' + args["filetype"]
         
-            misc.imsave(save_name, new_frames[j])
+            imageio.imsave(save_name, new_frames[j])
     
 
 def file_sort(imgList):
     """rename, sorting and move image files"""
     
-    for i in xrange(0,(len(imgList))):
+    for i in range(0,(len(imgList))):
         
         new_file = save_path + str('{:05}'.format(i)) + '.' + args["filetype"]
         
@@ -185,7 +188,7 @@ if __name__ == '__main__':
         print("proceeesing image pairs: " + v + " & " + w)
     
     
-    for i in xrange(0,(len(imgList)-1)):
+    for i in range(0,(len(imgList)-1)):
         
         print("proceeesing image pairs: " + imgList[i] + " & " + imgList[i+1])
         
@@ -193,9 +196,9 @@ if __name__ == '__main__':
         filename, file_extension = os.path.splitext(imgList[i])
         #filename = filename.replace(current_path,"")
         
-        img1 = misc.imread(current_path + imgList[i])
+        img1 = imageio.imread(current_path + imgList[i])
         
-        img2 = misc.imread(current_path + imgList[i+1])
+        img2 = imageio.imread(current_path + imgList[i+1])
         
         new_frames = interpolate_frame(img1, img2, n_frames = args["n_frames"], scale = .5**.25, xp = xp)
         
@@ -203,7 +206,7 @@ if __name__ == '__main__':
             
             save_name = save_path + filename + '_'+ str(j) +'.' + args["filetype"]
         
-            misc.imsave(save_name, new_frames[j])
+            imageio.imsave(save_name, new_frames[j])
         
     
 
@@ -229,9 +232,9 @@ if __name__ == '__main__':
     try:
         shutil.rmtree(dst_path, ignore_errors=True)
         
-        print "Phase based motion frame prediction and interpolation was finished!\n"
+        print ("Phase based motion frame prediction and interpolation was finished!\n")
         
-        print "results_folder: " + save_path  
+        print ("results_folder: " + save_path)
         
     except OSError:
         pass
@@ -253,9 +256,9 @@ if __name__ == '__main__':
         filename, file_extension = os.path.splitext(imgList[i])
         #filename = filename.replace(current_path,"")
         
-        img1 = misc.imread(current_path + imgList[i])
+        img1 = imageio.imread(current_path + imgList[i])
         
-        img2 = misc.imread(current_path + imgList[i+1])
+        img2 = imageio.imread(current_path + imgList[i+1])
         
         new_frames = interpolate_frame(img1, img2, n_frames = args["n_frames"], scale = .5**.25, xp = xp)
         
@@ -263,7 +266,7 @@ if __name__ == '__main__':
             
             save_name = save_path + filename + '_'+ str(j) +'.' + args["filetype"]
         
-            misc.imsave(save_name, new_frames[j])
+            imageio.imsave(save_name, new_frames[j])
         
     
     '''

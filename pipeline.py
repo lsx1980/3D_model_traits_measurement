@@ -13,7 +13,7 @@ python pipeline.py -p /home/suxingliu/model-scan/model-data/ -m surface.ply -i 1
 
 parameter list:
 
- ap.add_argument('-n_frames', '-n', required = True, type = int, default = 1 , help = 'Number of new frames.')
+ap.add_argument('-n_frames', '-n', required = True, type = int, default = 1 , help = 'Number of new frames.')
 
 
 """
@@ -45,7 +45,7 @@ def model_analysis_pipeline(current_path, filename):
     
     
     # step 1
-    model_point_scan = "python /opt/code/pt_scan.py -p " + current_path + " -m " + filename + " -i " + str(interval) +  " -d " + str(Axis_sweep) + " -r " + str(flag_reverse)
+    model_point_scan = "python /opt/code/pt_scan_engine.py -p " + current_path + " -m " + filename + " -i " + str(interval) +  " -de " + str(direction) 
     
     print("Computing cross section image sequence from 3D model file...\n")
     

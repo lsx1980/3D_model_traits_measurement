@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python crossection_scan.py -p /home/suxingliu/model-scan/test/cross_section_scan/ -th 2.35
+python3 crossection_scan.py -p /home/suxingliu/model-scan/test/cross_section_scan/ -th 2.35
 
 
 argument:
@@ -31,7 +31,7 @@ import argparse
 import shutil
 import cv2
 
-import morphsnakes
+#import morphsnakes
 import math
 
 from numpy import NaN, Inf, arange, isscalar, asarray, array
@@ -110,13 +110,22 @@ def get_median_filtered(signal, threshold=3):
     
     return signal
 
-# get middle value of a list
+'''
 def findMiddle(input_list):
     l = len(input_list)
     if l/2:
         return (input_list[l/2-1]+input_list[l/2])/2.0
     else:
         return input_list[(l/2-1)/2]
+'''
+# get middle value of a list
+def findMiddle(input_list):
+    middle = float(len(input_list))/2
+    if middle % 2 != 0:
+        return input_list[int(middle - .5)]
+    else:
+        return (input_list[int(middle)], input_list[int(middle-1)])
+
 
 # get average of a list 
 def Average(lst): 
@@ -135,7 +144,7 @@ def comp_external_contour(orig,thresh):
      #Convert the mean shift image to grayscale, then apply Otsu's thresholding
     gray = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
     
-    convexhull = convex_hull_image(thresh)
+    convexhull = convex_hull_image(gray)
     
     img_convexhull = np.uint8(convexhull)*255
     
@@ -186,13 +195,17 @@ def root_area_label(image_file):
     #load the image and perform pyramid mean shift filtering to aid the thresholding step
     imgcolor = cv2.imread(image_file)
     
-    #imgcolor = ~imgcolor
+    imgcolor_copy = imgcolor
+    
+    imgcolor = ~imgcolor
     
     #accquire image dimensions 
     height, width, channels = imgcolor.shape
     
-    #shifted = cv2.pyrMeanShiftFiltering(imgcolor, 5, 5)
+    #print(height, width, channels)
     
+    #shifted = cv2.pyrMeanShiftFiltering(imgcolor, 5, 5)
+    '''
     #define image morphology operation kernel
     kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
     
@@ -203,11 +216,11 @@ def root_area_label(image_file):
     
     #Image binarization by apltying otsu threshold
     #img = cv2.cvtColor(closing, cv2.COLOR_BGR2GRAY)
-    
+    '''
     # Convert BGR to GRAY
-    img_lab = cv2.cvtColor(erode, cv2.COLOR_BGR2LAB)
+    #img_lab = cv2.cvtColor(erode, cv2.COLOR_BGR2LAB)
     
-    gray = cv2.cvtColor(img_lab, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(imgcolor, cv2.COLOR_BGR2GRAY)
     
 
     #Obtain the threshold image using OTSU adaptive filter
@@ -274,7 +287,7 @@ def root_area_label(image_file):
     result_img_path = save_path_label + str(filename[0:-4]) + '_label.png'
     
     # save results
-    cv2.imwrite(result_img_path,labeled_img)
+    cv2.imwrite(result_img_path, labeled_img)
     
     
     #Creat background image to display the location of detected roots
@@ -475,7 +488,7 @@ def CDF_visualization(result):
         wb = Workbook()
         sheet = wb.active
     
-    data = list(zip(*result)[0])
+    data = list(zip(*result))[0]
 
     for row in enumerate(data):
     
@@ -490,7 +503,7 @@ def CDF_visualization(result):
     num_bins = 10
     
     #counts, bin_edges = np.histogram(list(zip(*result)[0]), bins = num_bins, normed = True)
-    counts, bin_edges = np.histogram(list(zip(*result)[0]), bins = num_bins)
+    counts, bin_edges = np.histogram(list(zip(*result))[0], bins = num_bins)
     
     # compute CDF curve
     cdf = np.cumsum(counts)
@@ -624,6 +637,8 @@ def root_system_trait(image_file):
      # load the image and perform pyramid mean shift filtering to aid the thresholding step
     imgcolor = cv2.imread(image_file)
     
+    imgcolor = ~imgcolor
+    
     # accquire image dimensions 
     height, width, channels = imgcolor.shape
     #shifted = cv2.pyrMeanShiftFiltering(image, 5, 5)
@@ -740,16 +755,16 @@ def parallel_root_system_trait(images):
         root_system_trait(file_idx)
         
     '''
-    base_name_rec = list(zip(*result)[0])
-    convexhull_diameter_rec = list(zip(*result)[1])
-    len_radius_rec = list(zip(*result)[2])
-    num_primary_root_rec = list(zip(*result)[3])
-    num_lateral_root_rec = list(zip(*result)[4])
-    num_fine_root_rec = list(zip(*result)[5])
-    eccentricity_rec = list(zip(*result)[6])
-    d_major_rec = list(zip(*result)[7])
-    d_minor_rec = list(zip(*result)[8])
-    radius_rec = list(zip(*result)[9])
+    base_name_rec = list(zip(*result))[0]
+    convexhull_diameter_rec = list(zip(*result))[1]
+    len_radius_rec = list(zip(*result))[2]
+    num_primary_root_rec = list(zip(*result))[3]
+    num_lateral_root_rec = list(zip(*result))[4]
+    num_fine_root_rec = list(zip(*result))[5]
+    eccentricity_rec = list(zip(*result))[6]
+    d_major_rec = list(zip(*result))[7]
+    d_minor_rec = list(zip(*result))[8]
+    radius_rec = list(zip(*result))[9]
     
     eccentricity_avg = Average(eccentricity_rec)
     d_major_avg = Average(d_major_rec)
@@ -1025,7 +1040,7 @@ if __name__ == '__main__':
         
         print(pattern_id)
         parallel_root_system_trait(list_part[i])
-
+    
 
     '''
     #convert excel to cvs file 

@@ -2,8 +2,8 @@ import numpy
 from PIL import ImageTk
 import PIL
 import scipy.stats
-#import tkinter
-import Tkinter
+import tkinter
+#import Tkinter
 import math
 from .round import round
 

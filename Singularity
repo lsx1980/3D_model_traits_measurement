@@ -1,5 +1,5 @@
 BootStrap: docker
-From: ubuntu:16.04
+From: ubuntu:18.04
 
 %labels
   Maintainer: Suxing Liu
@@ -23,46 +23,27 @@ From: ubuntu:16.04
   apt update
   apt install -y \
     build-essential \
-    python3 \
-    python-setuptools \
-    python-numpy \
-    python-matplotlib \
-    ipython \
-    ipython-notebook \
-    python-pandas \
-    python-sympy \
-    python-nose \
-    python-scipy \
-    python-sklearn \
-    python-numexpr \
-    python-vtk \
-    python-tk \
-    python-wxgtk3.0 \
-    gtk2-engines \
-    gtk2-engines-* \
-    overlay-scrollbar-gtk2 \
-    unity-gtk-module-common \
-    libcanberra-gtk-module \
-    libatk-adaptor \
-    libgail-common \
-    xvfb \
-    python-pip 
-
-  #apt-get install --reinstall unity-gtk-module
+    python3-setuptools \
+    python3-pip \
+    python3-tk \
+    python3-pil.imagetk \
+    libgl1-mesa-glx \
+    libsm6 \
+    libxext6
+    
+  pip3 install numpy \
+                Pillow \
+                rdp \
+                scipy \
+                scikit-image \
+                matplotlib \
+                plyfile \
+                open3d \
+                opencv-python \
+                openpyxl
+                
+  pip3 install -U scikit-learn
   
-  pip install --upgrade pip
-  
-  /usr/local/bin/pip install -U numpy 
-  
-  /usr/local/bin/pip install scikit-image \
-                                rdp \
-                                scikit-learn \
-                                mayavi \
-                                opencv-python \
-                                openpyxl \
-                                plyfile \
-                                xvfbwrapper
-
 
   mkdir /lscratch /db /work /scratch
   
@@ -89,6 +70,6 @@ From: ubuntu:16.04
   #----------------------------------------------------------
   # commands to be executed within container at close of bootstrap process
   #----------------------------------------------------------
-   python --version
-   #python requirement.py 
+   python3 --version
+   #python3 requirement.py 
    
