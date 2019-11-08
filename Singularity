@@ -26,10 +26,12 @@ From: ubuntu:18.04
     python3-setuptools \
     python3-pip \
     python3-tk \
+    python3-numexpr \
     python3-pil.imagetk \
     libgl1-mesa-glx \
     libsm6 \
     libxext6
+    
     
   pip3 install numpy \
                 Pillow \

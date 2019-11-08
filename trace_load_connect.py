@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python trace_load_connect.py -p /home/suxingliu/model-scan/trace/ -dt 100.5 -ma 0.1 -dr 4.8 
+python3 trace_load_connect.py -p /home/suxingliu/ply_data/trace_track/ -dt 100.5 -ma 0.1 -dr 4.8 
 
 
 argument:
@@ -40,7 +40,6 @@ from openpyxl import Workbook
         
 from scipy.spatial import distance
 
-#from mayavi import mlab
 
 import itertools
 
@@ -487,9 +486,9 @@ if __name__ == '__main__':
 
     file_list = sorted(fnmatch.filter(os.listdir(args["path"]), filetype))
       
-    file_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    #file_list.sort(key=lambda f: int(filter(str.isdigit, f)))
     
-    #print(file_list)
+    print(file_list)
     
     global trace_rec, dis_tracking, min_angle, dist_ratio
     
@@ -525,7 +524,7 @@ if __name__ == '__main__':
     
     
     
-    print "results_folder: " + save_path_result  
+    print ("results_folder: " + save_path_result) 
     ##################################################################
     #Start of writing measured parameters as excel file 
     
@@ -600,7 +599,8 @@ if __name__ == '__main__':
     wb = load_workbook(trait_file)
     sh = wb.get_active_sheet()
     
-    with open(trait_file_csv, 'wb') as f:  # open('test.csv', 'w', newline="") for python 3
+    #with open(trait_file_csv, 'wb') as f:
+    with open(trait_file_csv, 'w', newline = "") as f:
         c = csv.writer(f)
         for r in sh.rows:
             c.writerow([cell.value for cell in r])

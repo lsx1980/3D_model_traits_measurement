@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python3 crossection_scan.py -p /home/suxingliu/model-scan/test/cross_section_scan/ -th 2.35
+python3 crossection_scan.py -p /home/suxingliu/ply_data/cross_section_scan/ -th 2.35
 
 
 argument:
@@ -1042,7 +1042,7 @@ if __name__ == '__main__':
         parallel_root_system_trait(list_part[i])
     
 
-    '''
+    
     #convert excel to cvs file 
     
     trait_file = (parent_path + '/system_traits.xlsx')
@@ -1051,10 +1051,11 @@ if __name__ == '__main__':
 
     wb = load_workbook(trait_file)
     sh = wb.active
-    
-    with open(trait_file_csv, 'wb') as f:  # open('test.csv', 'w', newline="") for python 3
+
+    #with open(trait_file_csv, 'wb') as f:  # open('test.csv', 'w', newline="") for python 3
+    with open(trait_file_csv, 'w', newline = "") as f:
         c = csv.writer(f)
         for r in sh.rows:
             c.writerow([cell.value for cell in r])
-    '''
+    
     

@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python object_tracking.py -p /home/suxingliu/model-scan/sequence/ -d 10 -mfs 15 -mtl 15 -rmin 1 -rmax 100
+python3 object_tracking.py -p /home/suxingliu/model-scan/sequence/ -d 10 -mfs 15 -mtl 15 -rmin 1 -rmax 100
 
 
 argument:
@@ -23,6 +23,7 @@ argument:
 import argparse
 import os
 import fnmatch
+import re
 
 import cv2
 import copy
@@ -132,11 +133,15 @@ def Trace_tracking(images):
     #extract tfirst file name 
     first_filename = os.path.splitext(images[0])[0]
     
-    #extract tfirst file index
-    first_number = int(filter(str.isdigit, first_filename))
+    #extract first file index
+    #first_number = int(filter(str.isdigit, first_filename))
+    
+    first_number = int(re.search(r'\d+', first_filename).group(0))
     
     #define trace result path
-    outfile = save_path_track + 'trace_result_' + str(first_number) + '.txt'
+    outfile = save_path_track +  str('{:04}'.format(first_number)) + '.txt'
+        
+    print(outfile)
 
     image_path = os.path.join(dir_path, images[0])
     
@@ -232,7 +237,7 @@ def Trace_tracking(images):
     offset = first_number
     
     # write output as txt file
-    with file(outfile, 'w') as f:
+    with open(outfile, 'w') as f:
         
         #loop all tracked objects
         for i in range(len(tracker.tracks)):
@@ -259,8 +264,8 @@ def Trace_tracking(images):
                 z = np.asarray(range(offset , dim + offset)).flatten() 
                 
                 #curve fitting of xy trace in 2D space
-                popt, pcov = curve_fit(func, x, y)
-                y = func(x, *popt)
+                #popt, pcov = curve_fit(func, x, y)
+                #y = func(x, *popt)
                 
                 #compute average radius 
                 avg_radius = center_radius(x,y,radius_track,coord_radius)
@@ -288,7 +293,7 @@ def Trace_tracking(images):
         f.write("#End\n")
         f.close()
 
-
+    
     
 
 if __name__ == "__main__":
@@ -358,4 +363,4 @@ if __name__ == "__main__":
         
         pool.terminate()
 
-    print "results_folder: " + save_path_track  
+    print ("results_folder: " + save_path_track)
