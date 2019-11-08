@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python3 object_tracking.py -p /home/suxingliu/model-scan/sequence/ -d 10 -mfs 15 -mtl 15 -rmin 1 -rmax 100
+python3 object_tracking.py -p /home/suxingliu/ply_data/sequence/ -d 10 -mfs 15 -mtl 15 -rmin 1 -rmax 100
 
 
 argument:

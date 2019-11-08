@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python pipeline.py -p /home/suxingliu/model-scan/model-data/ -m surface.ply -i 10000
+python3 pipeline.py -p /home/suxingliu/ply_data/ -m surface.ply
 
 parameter list:
 
@@ -45,15 +45,15 @@ def model_analysis_pipeline(current_path, filename):
     
     
     # step 1
-    model_point_scan = "python /opt/code/pt_scan_engine.py -p " + current_path + " -m " + filename + " -i " + str(interval) +  " -de " + str(direction) 
+    model_point_scan = "python3 /opt/code/pt_scan_engine.py -p " + current_path + " -m " + filename + " -i " + str(interval) +  " -de " + str(direction) 
     
     print("Computing cross section image sequence from 3D model file...\n")
     
-    #execute_script(model_point_scan)
-    
+    execute_script(model_point_scan)
+   
     
     # step 2
-    frame_interpolation = "python /opt/code/frame_interpolation_phase.py -p " + current_path + "cross_section_scan/" + " -n_frames " + str(n_frames)
+    frame_interpolation = "python3 /opt/code/frame_interpolation_phase.py -p " + current_path + "cross_section_scan/" + " -n_frames " + str(n_frames)
     
     print("Executing phase based frame interpolation with cross section image sequence...\n")
     
@@ -61,15 +61,16 @@ def model_analysis_pipeline(current_path, filename):
     
     
     # step 3
-    cross_section_scan = "python /opt/code/crossection_scan.py -p " + current_path + "interpolation_result/" + " -th " + str(thresh_value)
-    
+    cross_section_scan = "python3 /opt/code/crossection_scan.py -p " + current_path + "interpolation_result/" + " -th " + str(thresh_value)
+    #cross_section_scan = "python3 crossection_scan.py -p " + current_path + "cross_section_scan/" + " -th " + str(thresh_value)
+
     print("Analyzing cross section image sequence to generate labeled segmentation results...\n")
     
     execute_script(cross_section_scan)
     
     
     # step 4
-    object_tracking = "python /opt/code/object_tracking.py -p " + current_path + "active_component/" + " -d " + str(dist_thresh) + " -mfs " + str(max_frames_to_skip) + " -mtl " + str(max_trace_length) + " -rmin " + str(radius_min) + " -rmax " + str(radius_max)   
+    object_tracking = "python3 /opt/code/object_tracking.py -p " + current_path + "active_component/" + " -d " + str(dist_thresh) + " -mfs " + str(max_frames_to_skip) + " -mtl " + str(max_trace_length) + " -rmin " + str(radius_min) + " -rmax " + str(radius_max)   
     
     print("Analyzing root system traits by tracking individual root trace from each crosssection image...\n")
     
@@ -77,7 +78,7 @@ def model_analysis_pipeline(current_path, filename):
     
     
     # step 5
-    trace_analysis = "python /opt/code/trace_load_connect.py -p " + current_path + "trace_track/" + " -dt " + str(dis_tracking) + " -ma " + str(min_angle) + " -dr " + str(dist_ratio)
+    trace_analysis = "python3 /opt/code/trace_load_connect.py -p " + current_path + "trace_track/" + " -dt " + str(dis_tracking) + " -ma " + str(min_angle) + " -dr " + str(dist_ratio)
 
     print("Analyzing tracked root system traits...\n")
     
@@ -91,9 +92,9 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", required = True, help = "path to *.ply model file")
     ap.add_argument("-m", "--model", required = False, help = "model file name")
-    ap.add_argument("-i", "--interval", required = False, default = '1000',  type = int, help= "intervals along sweeping plane")
-    ap.add_argument("-de", "--direction", required = False, default = '1',   type = int, help = "direction of sweeping plane, X=0, Y=1, Z=2")
-    ap.add_argument("-r", "--reverse", required = False, default = '1', type = int, help = "Reverse model top_down, 1 for Ture, 0 for False")
+    ap.add_argument("-i", "--interval", required = False, default = '1',  type = int, help= "intervals along sweeping plane")
+    ap.add_argument("-de", "--direction", required = False, default = 'X', help = "direction of sweeping plane, X, Y, Z")
+    #ap.add_argument("-r", "--reverse", required = False, default = '1', type = int, help = "Reverse model top_down, 1 for Ture, 0 for False")
     ap.add_argument('-n_frames', '-n', required = False, type = int, default = 2 , help = 'Number of new frames.')
     ap.add_argument("-th", "--threshold", required = False, default = '2.35', type = float, help = "threshold to remove outliers")
     ap.add_argument('-d', '--dist_thresh', required = False, type = int, default = 10 , help = 'dist_thresh.')
@@ -114,8 +115,8 @@ if __name__ == '__main__':
     filename = args["model"]
     file_path = current_path + filename
     interval = args["interval"]
-    Axis_sweep = args["direction"]
-    flag_reverse = args["reverse"]
+    direction = args["direction"]
+    #flag_reverse = args["reverse"]
     
     #frame interpolation 
     n_frames = args["n_frames"]
