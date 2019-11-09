@@ -102,7 +102,7 @@ if __name__ == '__main__':
     ap.add_argument('-mtl', '--max_trace_length', required = False, type = int, default = 15 , help = 'max_trace_length.')
     ap.add_argument('-rmin', '--radius_min', required = False, type = int, default = 1 , help = 'radius_min.')
     ap.add_argument('-rmax', '--radius_max', required = False, type = int, default = 100 , help = 'radius_max.')
-    ap.add_argument("-dt", "--dis_tracking", required = False, type = float, default = 100.5, help = "dis_dis_tracking")
+    ap.add_argument("-dt", "--dis_tracking", required = False, type = float, default = 50.5, help = "dis_dis_tracking")
     ap.add_argument("-ma", "--min_angle", required = False, type = float, default = 0.1, help = "min_angle")
     ap.add_argument("-dr", "--dist_ratio", required = False, type = float, default = 4.8, help = "dist_ratio")
     args = vars(ap.parse_args())
