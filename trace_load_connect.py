@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python3 trace_load_connect.py -p /home/suxingliu/ply_data/trace_track/ -dt 100.5 -ma 0.1 -dr 4.8 
+python3 trace_load_connect.py -p /home/suxingliu/ply_data/trace_track/ -dt 50.5 -ma 0.1 -dr 4.8 
 
 
 argument:
@@ -473,7 +473,7 @@ if __name__ == '__main__':
     # construct the argument and parse the arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", required = True, help="path to trace file")
-    ap.add_argument("-dt", "--dis_tracking", required = True, default = '100.5', type = float, help = "dis_tracking")
+    ap.add_argument("-dt", "--dis_tracking", required = True, default = '50.5', type = float, help = "dis_tracking")
     ap.add_argument("-ma", "--min_angle", required = True, default = '0.1', type = float, help = "min_angle")
     ap.add_argument("-dr", "--dist_ratio", required = True, default = '4.8', type = float, help = "dist_ratio")
     args = vars(ap.parse_args())
