@@ -62,7 +62,7 @@ def model_analysis_pipeline(current_path, filename):
     
     # step 3
     #cross_section_scan = "python3 /opt/code/crossection_scan.py -p " + current_path + "interpolation_result/" + " -th " + str(thresh_value)
-    cross_section_scan = "python3 crossection_scan.py -p " + current_path + "cross_section_scan/" + " -th " + str(thresh_value)
+    cross_section_scan = "python3 /opt/code/crossection_scan.py -p " + current_path + "cross_section_scan/" + " -th " + str(thresh_value)
 
     print("Analyzing cross section image sequence to generate labeled segmentation results...\n")
     
