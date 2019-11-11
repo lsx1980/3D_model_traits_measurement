@@ -466,7 +466,60 @@ def trait_measure(trace_rec):
         
     return index_rec, length_rec, angle_rec, diameter_rec, projection_radius, trace_new
 
+'''
 
+# visualize the trace in 2D and apply color coding for each trace
+def visualize_trace_mayavi(file_path, trace_new):
+    
+    from mayavi import mlab
+    
+    #mlab.figure(size = (400,300))
+    f = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,400))
+    
+    cmap = get_cmap(len(trace_rec))
+    
+    #print("{0} Traces were successfuly tracked...\n".format(len(trace_rec)))
+    
+    for idx, trace_pointset in enumerate(trace_new):
+        
+        #print("Coordinate of Trace{0}: \n".format(idx))
+        #print(trace_rec[idx])
+
+        X = trace_new[idx][:,0]
+        Y = trace_new[idx][:,1]
+        Z = trace_new[idx][:,2]/3
+        (xx, yy, zz, angle, r) = fit_line(X,Y,Z)
+
+        radius = np.average(trace_new[idx][:,3])
+        
+        #generate random different colors for different traces
+        color_rgb = cmap(idx)[:len(cmap(idx))-1]
+        
+        #Draw 3d points and lines 
+        #pts = mlab.points3d(X, Y, Z, color = color_rgb, scale_factor = radius)
+        
+        pts = mlab.points3d(X, Y, Z, color = color_rgb, mode = 'point')
+        
+        #pts = mlab.points3d(X.mean(), Y.mean(), Z.mean(), color = color_rgb, scale_factor = 4.5, mode = 'sphere')
+
+        #pts = mlab.plot3d(xx, yy, zz, color = color_rgb, tube_radius = 1.1, line_width = 2)
+        
+        #pt = mlab.plot3d(X, Y, Z, color = color_rgb, tube_radius = 0.1, extent = [0,1,0,1,0,1])
+
+        pts.actor.property.set(point_size = 2.5)
+    
+    
+    #Save as ply models, optional
+    parent_path = os.path.abspath(os.path.join(file_path, os.pardir))
+    base_foler = os.path.basename(file_path[:-1])
+    
+    model_file = (parent_path + '/' + base_foler + '_root_trace_model' + '.obj')
+
+    mlab.savefig(model_file)
+    
+    #show model
+    mlab.show()
+'''
 
 if __name__ == '__main__':
     
