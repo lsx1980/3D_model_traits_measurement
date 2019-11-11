@@ -127,8 +127,6 @@ def findMiddle(input_list):
         #return (input_list[int(middle)], input_list[int(middle-1)])
         return (input_list[int(middle)])
 
-
-
 # get average of a list 
 def Average(lst): 
     return sum(lst) / len(lst)
