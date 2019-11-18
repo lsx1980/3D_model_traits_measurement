@@ -466,7 +466,6 @@ def trait_measure(trace_rec):
         
     return index_rec, length_rec, angle_rec, diameter_rec, projection_radius, trace_new
 
-'''
 
 # visualize the trace in 2D and apply color coding for each trace
 def visualize_trace_mayavi(file_path, trace_new):
@@ -504,7 +503,7 @@ def visualize_trace_mayavi(file_path, trace_new):
 
         #pts = mlab.plot3d(xx, yy, zz, color = color_rgb, tube_radius = 1.1, line_width = 2)
         
-        #pt = mlab.plot3d(X, Y, Z, color = color_rgb, tube_radius = 0.1, extent = [0,1,0,1,0,1])
+        #pts = mlab.plot3d(X, Y, Z, color = color_rgb, tube_radius = 0.1, extent = [0,1,0,1,0,1])
 
         pts.actor.property.set(point_size = 2.5)
     
@@ -519,7 +518,7 @@ def visualize_trace_mayavi(file_path, trace_new):
     
     #show model
     mlab.show()
-'''
+
 
 if __name__ == '__main__':
     

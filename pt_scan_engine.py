@@ -136,7 +136,7 @@ def mkdir(path):
 
 if __name__ == '__main__':
     
-      # construct the argument and parse the arguments
+    # construct the argument and parse the arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", required = True, help = "path to *.ply model file")
     ap.add_argument("-m", "--model", required = True, help = "model file name")

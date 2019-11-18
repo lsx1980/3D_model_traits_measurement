@@ -47,7 +47,7 @@ def mkdir(path):
     # process
     if not isExists:
         # construct the path and folder
-        print path + ' folder constructed!'
+        print (path + ' folder constructed!')
         # make dir
         os.makedirs(path)
         return True
