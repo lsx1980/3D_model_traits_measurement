@@ -293,7 +293,8 @@ class MorphGAC(object):
             self.step()
 
 
-def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, result_path = None, mask = 1, H = 400, W = 300):
+#def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, result_path = None, mask = 0, H = 400, W = 300):
+def evolve_visual(msnake, levelset = None, num_iters = 20, background = None):
     """
     Visual evolution of a morphological snake.
     
@@ -315,7 +316,13 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, re
     
     if levelset is not None:
         msnake.levelset = levelset
-    
+        
+    # Iterate.
+    for i in range(num_iters):
+        # Evolve.
+        msnake.step()
+        
+    '''
     if mask==1:
         #print("mask == 1")
         ######################################################
@@ -342,13 +349,13 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, re
 
 
 
-        '''
+       
         #if background is None:
             #ax1.imshow(msnake.data, cmap=plt.cm.gray)
         #else:
             #ax1.imshow(background, cmap=plt.cm.gray)
         #ax1.contour(msnake.levelset, [0.5], colors='r')
-        '''
+        
         
         #ax = fig.add_subplot(1,2,2)
         
@@ -368,6 +375,7 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, re
             #del ax1.collections[0]
             #ax1.contour(msnake.levelset, [0.5], colors='r')
             ax_u.set_data(msnake.levelset)
+            
             fig.canvas.draw()
             #plt.pause(0.001)
         
@@ -380,15 +388,12 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, re
         else:
             fig.savefig(result_path, bbox_inches = 0, pad_inches = 0)
             
-
-
-        
         plt.close(fig)
         
         ##########################################################
     
     elif mask == 0: 
-
+        
         ############################################################
         # Prepare the visual environment.
         fig = plt.gcf()
@@ -436,11 +441,17 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None, re
             
         plt.close(fig)
         #########################################################################3
-    
+        
+        # Iterate.
+        for i in range(num_iters):
+            # Evolve.
+            msnake.step()
+        
     else:
         print('Wrong parameter!')
         
-    
+    '''
+
     
     # Return the last levelset.
     return msnake.levelset

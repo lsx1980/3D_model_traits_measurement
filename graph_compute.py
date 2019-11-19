@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python3 graph_compute.py -p /home/suxingliu/3scan-skeleton/test/ -ft png
+python3 graph_compute.py -p /home/suxingliu/ply_data/CT_surface/ -ft png
 
 
 argument:
@@ -47,7 +47,7 @@ def load_image(image_file):
     #Obtain the threshold image using OTSU adaptive filter
     thresh = cv2.threshold(im_gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
-    return int(thresh/255)
+    return (thresh/255)
         
 
 def get_cmap(n, name = 'hsv'):

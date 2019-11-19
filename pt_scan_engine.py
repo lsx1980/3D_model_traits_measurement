@@ -9,7 +9,9 @@ Author-email: suxingliu@gmail.com
 
 USAGE
 
-python3 pt_scan_engine.py -p /home/suxingliu/cross_section_scan/ply-data/ -m surface2.ply -i 5 -de Z 
+python3 pt_scan_engine.py -p /home/suxingliu/ply_data/ -m surface.ply -i 5 -de X 
+
+python3 pt_scan_engine.py -p /home/suxingliu/ply_data/ -m test.ply -i 5 -de Y
 
 
 arguments:

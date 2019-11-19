@@ -110,14 +110,7 @@ def get_median_filtered(signal, threshold=3):
     
     return signal
 
-'''
-def findMiddle(input_list):
-    l = len(input_list)
-    if l/2:
-        return (input_list[l/2-1]+input_list[l/2])/2.0
-    else:
-        return input_list[(l/2-1)/2]
-'''
+
 # get middle value of a list
 def findMiddle(input_list):
     middle = float(len(input_list))/2
@@ -141,7 +134,7 @@ def comp_external_contour(orig,thresh):
     
     img_height, img_width, img_channels = orig.shape
     
-     #Convert the mean shift image to grayscale, then apply Otsu's thresholding
+    #Convert the mean shift image to grayscale, then apply Otsu's thresholding
     gray = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
     
     convexhull = convex_hull_image(gray)
@@ -205,7 +198,7 @@ def root_area_label(image_file):
     #print(height, width, channels)
     
     #shifted = cv2.pyrMeanShiftFiltering(imgcolor, 5, 5)
-    '''
+    
     #define image morphology operation kernel
     kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
     
@@ -215,12 +208,12 @@ def root_area_label(image_file):
     erode = cv2.erode(closing, kernel, iterations = 1)
     
     #Image binarization by apltying otsu threshold
-    #img = cv2.cvtColor(closing, cv2.COLOR_BGR2GRAY)
-    '''
+    gray = cv2.cvtColor(closing, cv2.COLOR_BGR2GRAY)
+    
     # Convert BGR to GRAY
     #img_lab = cv2.cvtColor(erode, cv2.COLOR_BGR2LAB)
     
-    gray = cv2.cvtColor(imgcolor, cv2.COLOR_BGR2GRAY)
+    #gray = cv2.cvtColor(imgcolor, cv2.COLOR_BGR2GRAY)
     
 
     #Obtain the threshold image using OTSU adaptive filter
@@ -303,25 +296,23 @@ def root_area_label(image_file):
         (x, y) = centroids[i]
         
         #radius of each contour
-        #r = int(math.sqrt(0.5*areas[i]/math.pi))
-        r = 2
+        r = int(math.sqrt(0.5*areas[i]/math.pi))
+        #r = 2
         
         if r > 0:
-            if i == 0:
+            if i == largest_label:
                 cv2.circle(image_background, (int(x), int(y)), int(r*radius_scale), (0, 128, 255), cv2.FILLED)
             else:
                 cv2.circle(image_background, (int(x), int(y)), int(r*radius_scale), (0, 255, 255), cv2.FILLED)
     
     #define result path for simplified segmentation result
-    result_img_path = save_path_ac + str(filename[0:-4]) + '_ac.png'
+    result_img_path = save_path_ac + str(filename[0:-4]) + '.png'
     
     #write out results
     cv2.imwrite(result_img_path,image_background)
     
     
     return area_avg, area_sum, len(np.unique(labels))
-    
-    
 
 
 
@@ -661,10 +652,10 @@ def root_system_trait(image_file):
     
    
     #define result path for labeled images
-    result_img_path = save_path_convex + str(filename[0:-4]) + '_convex.png'
+    #result_img_path = save_path_convex + str(filename[0:-4]) + '_convex.png'
     
     # save results
-    cv2.imwrite(result_img_path,img_convexhull)
+    #cv2.imwrite(result_img_path,img_convexhull)
     
     
     #print("eccentricity : {0} \n".format(str(eccentricity)))
@@ -932,9 +923,9 @@ if __name__ == '__main__':
     save_path_label = mkpath + '/'
     
     
-    mkpath = parent_path + '/' + str('convex')
-    mkdir(mkpath)
-    save_path_convex = mkpath + '/'
+    #mkpath = parent_path + '/' + str('convex')
+    #mkdir(mkpath)
+    #save_path_convex = mkpath + '/'
 
     #print "results_folder: " + save_path_ac  
     
