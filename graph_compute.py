@@ -30,7 +30,7 @@ from mayavi import mlab
 from mpl_toolkits.mplot3d import axes3d, Axes3D 
 import cv2
 
-#pip install imagesize, progressbar2
+
 import imagesize 
 import progressbar
 from time import sleep
@@ -179,8 +179,6 @@ if __name__ == '__main__':
     print("Occurrence Count : ", occurCount)
     
 
-    
-    
     #skeletonize
     ske = skeletonize(image_chunk)
 

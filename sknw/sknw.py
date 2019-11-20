@@ -1,3 +1,14 @@
+"""
+Version: 1.0
+
+Summary: Generate graph from skeleon 
+
+Author: suxing liu
+
+Author-email: suxingliu@gmail.com
+
+"""
+
 import numpy as np
 from numba import jit
 import networkx as nx
@@ -132,6 +143,7 @@ def draw_graph(img, graph, cn=255, ce=128):
             pts = eds[i]['pts']
             img[np.dot(pts, acc)] = ce
 
+#test function
 if __name__ == '__main__':
     g = nx.MultiGraph()
     g.add_nodes_from([1,2,3,4,5])

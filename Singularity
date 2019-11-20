@@ -43,6 +43,13 @@ From: ubuntu:18.04
                 open3d \
                 opencv-python \
                 openpyxl
+  
+  pip3 install numba \
+                imagesize \
+                progressbar2 \
+                mayavi \
+                PyQt5 \
+                networkx
                 
   pip3 install -U scikit-learn
   
