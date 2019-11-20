@@ -30,3 +30,14 @@ singularity exec shub://lsx1980/3D_model_traits_measurement python /opt/code/pip
     - Opencv 3.0 for Python - [Installation](http://www.pyimagesearch.com/2015/06/15/install-opencv-3-0-and-python-2-7-on-osx/)
     
 
+Visualization requirement:
+
+  pip3 install numba \
+                imagesize \
+                progressbar2 \
+                mayavi \
+                PyQt5 \
+                networkx
+  
+  python3 graph_compute.py -p /&path/active_component/
+  
