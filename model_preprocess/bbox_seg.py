@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python bbox_seg.py -p /home/suxingliu/frame-interpolation/test-image/ -ft jpg 
+python3 bbox_seg.py -p /home/suxingliu/frame-interpolation/test-image/ -ft jpg 
 
 
 argument:
@@ -102,7 +102,8 @@ def foreground_substractor(image_file):
     
     #thresh = cv2.dilate(thresh, None, iterations=2)
  
-    
+
+            
     # extract the contour of subject
     #im, cnts, hier = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
@@ -110,24 +111,44 @@ def foreground_substractor(image_file):
 
     #finad the max contour 
     c = max(cnts, key = cv2.contourArea)
+    
     '''
-    # determine the most extreme points along the contour
-    extLeft = tuple(c[c[:, :, 0].argmin()][0])
-    extRight = tuple(c[c[:, :, 0].argmax()][0])
-    extTop = tuple(c[c[:, :, 1].argmin()][0])
-    extBot = tuple(c[c[:, :, 1].argmax()][0])
-
+    linewidth = 10
+    
+    hull = cv2.convexHull(c)
+    # draw it in red color
+    trait_img = cv2.drawContours(image, [hull], -1, (0, 0, 255), linewidth)
     
     # draw the outline of the object, then draw each of the
     # extreme points, where the left-most is red, right-most
     # is green, top-most is blue, and bottom-most is teal
-    cv2.drawContours(image, [c], -1, (0, 255, 255), 2)
-    cv2.circle(image, extLeft, 8, (0, 0, 255), -1)
-    cv2.circle(image, extRight, 8, (0, 255, 0), -1)
-    cv2.circle(image, extTop, 8, (255, 0, 0), -1)
-    cv2.circle(image, extBot, 8, (255, 255, 0), -1)
+    trait_img = cv2.drawContours(image, [c], -1, (0, 255, 255), linewidth)
     
+    # determine the most extreme points along the contour
+    extLeft = tuple(c[c[:,:,0].argmin()][0])
+    extRight = tuple(c[c[:,:,0].argmax()][0])
+    extTop = tuple(c[c[:,:,1].argmin()][0])
+    extBot = tuple(c[c[:,:,1].argmax()][0])
+
+    trait_img = cv2.circle(image, extLeft, linewidth, (255, 0, 0), -1)
+    trait_img = cv2.circle(image, extRight, linewidth, (255, 0, 0), -1)
+    trait_img = cv2.circle(image, extTop, linewidth, (255, 0, 0), -1)
+    trait_img = cv2.circle(image, extBot, linewidth, (255, 0, 0), -1)
+
+    from scipy.spatial import distance as dist
+    
+    max_width = dist.euclidean(extLeft, extRight)
+    max_height = dist.euclidean(extTop, extBot)
+
+    trait_img = cv2.line(image, extLeft, extRight, (0,255,0), linewidth)
+    trait_img = cv2.line(image, extTop, extBot, (0,255,0), linewidth)
+    
+    # construct the result file path
+    result_img_path = save_path + str(filename[0:-4]) + '_seg.' + ext
+    
+    cv2.imwrite(result_img_path,trait_img)
     '''
+    
     # find the bouding box of the max contour
     (x, y, w, h) = cv2.boundingRect(c)
 
@@ -257,7 +278,7 @@ if __name__ == '__main__':
     mkdir(mkpath)
     save_path = mkpath + '/'
 
-    #print "results_folder: " + save_path  
+    print ("results_folder: " + save_path)
 
     
     # get cpu number for parallel processing

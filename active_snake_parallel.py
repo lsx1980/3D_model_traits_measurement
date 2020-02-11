@@ -165,22 +165,26 @@ if __name__ == '__main__':
     mkdir(mkpath)
     save_path_ac = mkpath + '/'
     
-    num_iters = 75
+    num_iters = 150
+
+    
     
     for idx, image_file in enumerate(imgList):
-        
+        '''
         num_iters_update = num_iters + idx*0.5
         
-        '''
+        
         if idx < 100:
             num_iters_update = 80
         elif idx < 300:
             num_iters_update = 120
         else:
             num_iters_update = 150
-        '''
+        
         print(num_iters_update)
-        active_snake(image_file, int(num_iters_update))
+        '''
+        
+        active_snake(image_file, int(num_iters))
     
     '''
     # Run this with a pool of avaliable agents having a chunksize of 3 until finished

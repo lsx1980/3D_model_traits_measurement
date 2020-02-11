@@ -571,7 +571,7 @@ if __name__ == '__main__':
     print("{0} Traces were successfuly tracked...\n".format(len(trace_new)))
  
     #disaply trace in 3D space
-    #visualize_trace_mayavi(file_path, trace_new)
+    visualize_trace_mayavi(file_path, trace_new)
     
     
     

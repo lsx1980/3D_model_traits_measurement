@@ -30,7 +30,8 @@ From: ubuntu:18.04
     python3-pil.imagetk \
     libgl1-mesa-glx \
     libsm6 \
-    libxext6
+    libxext6 
+
     
     
   pip3 install numpy \
@@ -39,10 +40,12 @@ From: ubuntu:18.04
                 scipy \
                 scikit-image \
                 matplotlib \
+                networkx \
                 plyfile \
                 open3d \
                 opencv-python \
-                openpyxl
+                openpyxl \
+                
 
   pip3 install -U scikit-learn
   

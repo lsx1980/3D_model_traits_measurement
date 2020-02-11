@@ -289,7 +289,7 @@ def root_area_label(image_file):
     # assign image values
     image_background[:] = (0, 0, 0)
     
-    radius_scale = 1
+    radius_scale = 2
     
     for i in range(1, len(centroids)):
         
@@ -303,7 +303,7 @@ def root_area_label(image_file):
             if i == largest_label:
                 cv2.circle(image_background, (int(x), int(y)), int(r*radius_scale), (0, 128, 255), cv2.FILLED)
             else:
-                cv2.circle(image_background, (int(x), int(y)), int(r*radius_scale), (0, 255, 255), cv2.FILLED)
+                cv2.circle(image_background, (int(x), int(y)), int(r*1), (0, 255, 255), cv2.FILLED)
     
     #define result path for simplified segmentation result
     result_img_path = save_path_ac + str(filename[0:-4]) + '.png'
@@ -587,9 +587,9 @@ def CDF_visualization(result):
     fig = plt.figure(1)
     plt.grid(True)
     plt.legend(loc='right')
-    plt.title('CDF of scanned root area ')
-    plt.xlabel('Root area')
-    plt.ylabel('NUmber of slices')
+    plt.title('CDF curve ')
+    plt.xlabel('Root area, unit:pixel')
+    plt.ylabel('Depth of level-set, unit:pixel')
     
     plt.plot(sx, sy, 'gx-', label='simplified trajectory')
     plt.plot(bin_edges[1:], cdf, '-b', label = 'CDF')

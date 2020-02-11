@@ -15,7 +15,7 @@ python3 frame_interpolation_phase.py -p /home/suxingliu/ply_data/cross_section_s
 
 argument:
 ("-p", "--path", required = True,    help = "path to image file")
-("-ft", "--filetype", required = False,    help = "Image filetype")
+("-ft", "--filetype", required = False, default = 'jpg', help = "Image filetype")
 ('-n_frames', '-n', required = True, type = int, default = 1 , help = 'Number of new frames.')
 ('-dev', '-d', required = False, type = str, default = 'cpu', help = 'Choose a device to run on.')
 ('-gpu', type = int, required = False, default = 0, help = 'Choose which GPU to use.')
@@ -35,6 +35,7 @@ from matplotlib import pyplot as plt
 import shutil
 
 from frame_interp import interpolate_frame
+from skimage import img_as_ubyte
 
 import sys
 import os,fnmatch,os.path
@@ -95,6 +96,7 @@ def frame_interpolation(imgList_pair):
         
         print("proceeesing image pair: " + v + " & " + w + "\n")
         
+        
         #load image pairs
         img1 = imageio.imread(current_path + v)
         img2 = imageio.imread(current_path + w)
@@ -102,13 +104,17 @@ def frame_interpolation(imgList_pair):
         #generate interpolation images
         new_frames = interpolate_frame(img1, img2, n_frames = args["n_frames"], scale = .5**.25, xp = xp)
         
+
+        
         #save interpolated images 
         for j in range(args["n_frames"]):
             
             save_name = save_path + filename + '_'+ str(j) +'.' + args["filetype"]
         
-            imageio.imsave(save_name, new_frames[j])
-    
+            new_img = img_as_ubyte(new_frames[j])
+                    
+            imageio.imsave(save_name, new_img)
+        
 
 def file_sort(imgList):
     """rename, sorting and move image files"""
@@ -169,7 +175,9 @@ if __name__ == '__main__':
     
     #start = time.time()
     
-    '''
+    #frame_interpolation(imgList_pair)
+    
+    
     # get cpu number for parallel processing
     agents = multiprocessing.cpu_count() - 2
     
@@ -180,8 +188,10 @@ if __name__ == '__main__':
     with closing(Pool(processes = agents)) as pool:
         pool.map(frame_interpolation, zip(imgList_pair))
         pool.terminate()
-    '''
     
+    
+    
+    '''
     #loop for frame interpolation
     for v, w in pairwise(imgList):
         
@@ -205,10 +215,12 @@ if __name__ == '__main__':
         for j in range(args["n_frames"]):
             
             save_name = save_path + filename + '_'+ str(j) +'.' + args["filetype"]
+            
+            new_img = img_as_ubyte(new_frames[j])
         
-            imageio.imsave(save_name, new_frames[j])
+            imageio.imsave(save_name, new_img)
         
-    
+    '''
 
     # setting path to result file
     ori_path = current_path
@@ -241,35 +253,7 @@ if __name__ == '__main__':
     
     
     
-    '''
-    #loop for frame interpolation
-    for v, w in pairwise(imgList):
-        
-        print("proceeesing image pairs: " + v + " & " + w)
-    
-    
-    for i in xrange(0,(len(imgList)-1)):
-        
-        print("proceeesing image pairs: " + imgList[i] + " & " + imgList[i+1])
-        
-         # accquire filename without extension
-        filename, file_extension = os.path.splitext(imgList[i])
-        #filename = filename.replace(current_path,"")
-        
-        img1 = imageio.imread(current_path + imgList[i])
-        
-        img2 = imageio.imread(current_path + imgList[i+1])
-        
-        new_frames = interpolate_frame(img1, img2, n_frames = args["n_frames"], scale = .5**.25, xp = xp)
-        
-        for j in range(args["n_frames"]):
-            
-            save_name = save_path + filename + '_'+ str(j) +'.' + args["filetype"]
-        
-            imageio.imsave(save_name, new_frames[j])
-        
-    
-    '''
+
 
     
     

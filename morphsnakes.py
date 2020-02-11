@@ -34,7 +34,8 @@ import numpy as np
 from scipy import ndimage
 from scipy.ndimage import binary_dilation, binary_erosion, gaussian_filter, gaussian_gradient_magnitude
                         
-
+import cv2
+from skimage import img_as_ubyte
 
 class fcycle(object):
     
@@ -312,7 +313,8 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None):
         msnake.data.
     """
        
-
+    #load the image and perform pyramid mean shift filtering to aid the thresholding step
+    im_color = cv2.imread('/home/suxingliu/test/active_snake/0348.jpg')
     
     if levelset is not None:
         msnake.levelset = levelset
@@ -322,6 +324,47 @@ def evolve_visual(msnake, levelset = None, num_iters = 20, background = None):
         # Evolve.
         msnake.step()
         
+    '''
+        #visualize the iteration steps
+        # Prepare the visual environment.
+        fig = plt.gcf()
+        fig.clf()
+        
+        ax = plt.Axes(fig, [0., 0., 1.0, 1.0])
+        ax.set_axis_off()
+        
+        ax.set_frame_on(False)
+        plt.axis('off')
+        
+        
+        fig.add_axes(ax)
+            
+        if background is None:
+            ax.imshow(msnake.data, cmap=plt.cm.gray)
+        else:
+            ax.imshow(background, cmap=plt.cm.gray)
+            
+        ax.contour(msnake.levelset, [0.5], colors='r')
+        
+        plt.pause(0.001)
+        
+           
+        # Update figure.
+        del ax.collections[0]
+        ax.contour(msnake.levelset, [0.5], colors='r')
+        fig.canvas.draw()
+        
+        result_img_path = '/home/suxingliu/active_snake_steps/active_component/' + str('{:03}'.format(i)) + '.png'
+        
+        extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        
+        fig.savefig(result_img_path, bbox_inches=extent)
+        
+    '''
+    #plt.show()
+    
+    
+    
     '''
     if mask==1:
         #print("mask == 1")
