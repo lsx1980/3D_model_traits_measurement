@@ -7,6 +7,10 @@ from mayavi import mlab
 import numpy as np
 import sys
 import pdb
+import math
+
+from collections import Counter, defaultdict
+
 
 def get_nhood(img):
     """
@@ -142,7 +146,8 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
                     node_inds_all[val].append(idx)
     N=len(node_inds_all.keys())
     for i in node_inds_all.keys():
-        sys.stdout.write("\rpercentage: " + str(100 * i / N) + "%")
+        #sys.stdout.write("\rpercentage: " + str(100 * i / N) + "%")
+        sys.stdout.write("\rpercentage: " + '{:.2%}'.format(i / N))
         sys.stdout.flush()
         node_inds = node_inds_all[i]
         i -= 1  # to have n_v starting at 0
@@ -175,7 +180,8 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
     N=len(G.nodes())
     alledges=[]
     for i, nd in G.nodes(data=True):
-        sys.stdout.write("\rpercentage: " + str(100 * i / N) + "%")
+        #sys.stdout.write("\rpercentage: " + str(100 * i / N) + "%")
+        sys.stdout.write("\rpercentage: " +  '{:.2%}'.format(i / N))
         sys.stdout.flush()
         # if i ==46:
         # pdb.set_trace()
@@ -300,6 +306,72 @@ def get_length(x_, y_, z_):
         return 0
 
 
+def find_repeating(lst, count):
+    ret = []
+    counts = [None] * len(lst)
+    for i in lst:
+        if counts[i] is None:
+            counts[i] = i
+        elif i == counts[i]:
+            ret += [i]
+            if len(ret) == count:
+                return ret
+
+def find_duplicates(lst):
+    
+    sort_list = sorted(set(lst))
+    dup_list =[]
+    idx = []
+    
+    for i in range(len(sort_list)):
+        if (lst.count(sort_list[i]) > 1 ):
+            dup_list.append(sort_list[i])
+            idx.append(i)
+            
+    return dup_list,idx
+
+
+def duplicates(lst):
+
+    cnt = Counter(lst)
+    
+    return [key for key in cnt.keys() if cnt[key]> 1]
+
+def indices(lst, items= None):
+    
+    items, ind = set(lst) if items is None else items, defaultdict(list)
+    
+    for i, v in enumerate(lst):
+        
+        if v in items: ind[v].append(i)
+        
+    return ind
+
+
+def asSpherical(x, y, z):
+    """coordinates transormation from cartesian coords to sphere coord system"""
+
+    r = math.sqrt(x*x + y*y + z*z)
+    
+    elevation = math.acos(z/r)*180/math.pi #to degrees
+    
+    azimuth = np.arctan2(y,x)*180/math.pi
+    
+    return r, elevation, azimuth
+
+def trace_angle(x, y, z):
+    """compute the angle of each trace in 3D space"""
+    
+    #print(x[0],y[0],z[0])
+    #print(x[len(x)-1],y[len(y)-1],z[len(z)-1])
+    
+    cx = x[0] - x[len(x)-1]
+    cy = y[0] - y[len(y)-1]
+    cz = z[0] - z[len(z)-1]
+
+    (r,theta,phi) = asSpherical(cx, cy, cz)
+    
+    return r, theta, phi
 
 def plot_graph( G,
                node_size=1, node_color=(1, 1, 1), scale_node_keyword=None,
@@ -360,13 +432,16 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     yn = []
     zn = []
   
+    edge_node_n1 = []
+    edge_node_n2 = []
+    edge_angle = []
+    
 
     for node in G.nodes():
         xn.append(G.nodes[node]['x'])
         yn.append(G.nodes[node]['y'])
         zn.append(G.nodes[node]['z'])
        
-    
     # add edge segments
     i = 0 #number of added segments
     for n1, n2, edgedict in G.edges(data=True):
@@ -378,6 +453,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         ystop.extend(edgedict['y'])
         zstart.extend(edgedict['z'])
         zstop.extend(edgedict['z'])
+        
         
         #how many segments in line?
         l = len(edgedict['x'])
@@ -411,6 +487,15 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
                 edge_r.extend(edgedict[edge_radius_keyword])
         else:
             edge_r += [tube_radius] * (l)
+            
+            
+        (r_data, theta_data, phi_data) = trace_angle(edgedict['x'], edgedict['y'], edgedict['z'])
+
+        edge_node_n1.append(n1)
+        edge_node_n2.append(n2)
+       
+        edge_angle.append(abs(phi_data))
+        
     #pdb.set_trace()
     #pot network
     fig = mlab.gcf()
@@ -420,7 +505,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     edge_c = np.array(edge_c)
     if np.isinf(edge_c).any():
         edge_c[np.isinf(edge_c)] = np.nan
-
+        
     xv = np.array([xstart])  
     yv = np.array([ystart])  
     zv = np.array([zstart])  
@@ -441,18 +526,16 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     if tube_radius is not None:
         #edges_src.mlab_source.dataset.point_data.vectors = np.abs(
         #        np.array([edge_r,edge_r,edge_r]).T)
-        edges_src.mlab_source.dataset.point_data.add_array(
-                np.abs(np.array(edge_r).ravel()))
+        edges_src.mlab_source.dataset.point_data.add_array(np.abs(np.array(edge_r).ravel()))
+        
         edges_src.mlab_source.dataset.point_data.get_array(1).name = 'radius'
-        tubes = mlab.pipeline.tube(mlab. pipeline.set_active_attribute(edges_src,
-                                    point_scalars='radius'),
-                                     tube_radius=tube_radius,)
+        
+        tubes = mlab.pipeline.tube(mlab. pipeline.set_active_attribute(edges_src, point_scalars='radius'), tube_radius=tube_radius,)
         
         #tubes.filter.radius=edge_r
         tubes.filter.vary_radius = 'vary_radius_by_scalar'
     else:
         tubes = edges_src
-        
     
     tube_surf = mlab.pipeline.surface(mlab.pipeline.set_active_attribute(tubes, point_scalars='scalars'), colormap=edge_colormap, color=edge_color, **kwargs)
     
@@ -466,6 +549,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     if not node_size:
         return tube_surf, None
 
+
     # ------------------------------------------------------------------------
     # Plot the nodes
     if node_size is not None:
@@ -477,11 +561,9 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
             nodes = G.nodes()
             L = len(G.nodes())
 
-           
             s = np.ones(len(xn))
             # pdb.set_trace()
-            pts = mlab.points3d(xn, yn, zn, s,
-                                scale_factor=node_size,
+            pts = mlab.points3d(xn, yn, zn, s, scale_factor=node_size,
                                 # colormap=node_colormap,
                                 resolution=16,
                                 color=node_color)
@@ -506,11 +588,102 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
                 node_color_scalar = len(xn) * [1]
 
             pts = mlab.quiver3d(np.array(xn).ravel(), np.array(yn).ravel(), np.array(zn).ravel(),s,s,s, scalars=np.array(node_color_scalar).ravel(), mode='sphere',scale_factor=node_size,resolution=16)
+            
+            '''
+            for i in range(len(xn)):
+                
+                mlab.text3d(xn[i], yn[i], zn[i], str(i), scale=(2, 2, 2))
+            '''
+                        
             pts.glyph.glyph_source.glyph_position = 'center'
+            
             pts.glyph.color_mode = 'color_by_scalar'
+            
             #pts.glyph.scale_mode = 'scale_by_vector'
+    
+    # ------------------------------------------------------------------------
+    # Plot the edge index at the first node location
+    
+    print("edge_node_n1: {0}".format(edge_node_n1))
+    print("edge_node_n2: {0}".format(edge_node_n2))
+    #print(edge_node_n2)
+    #print(edge_angle)
+    
+    duplicate_node = duplicates(edge_node_n1)
+    
+    idx = indices(edge_node_n1, duplicates(edge_node_n1))
+    
+    print("duplicate_node: {0}".format(duplicate_node))
+    
+    print("duplicate index: {0}".format(idx))
+    
+    #print("\n")
+    
+    connect_code_idx = []
+    
+    angle_thresh = 4
+
+    for i in range(len(idx)):
+        
+        #print("Index = {0}:".format(i))
+        #print("Value = {0}:".format(idx[duplicate_node[i]]))
+    
+        angle_rec = []
+        
+        for element in idx[duplicate_node[i]]:
+            #print(edge_angle[element])
+            
+            angle_rec.append(edge_angle[element])
+            
+            #print(edge_node_n1[element])
+            #print(edge_node_n2[element])
+            
+        angle_diff = np.diff(angle_rec)
+        
+        #print("angle_rec =  {0}".format(angle_rec))
+        #print("angle_diff = {0}".format(angle_diff))
+        
+        
+        for j in range(len(angle_diff)):
+            
+            if angle_diff[j] > angle_thresh:
+                
+                print(angle_rec[j],angle_rec[j+1])
+                #print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j]))
+                #print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j+1]))
+                #print("Index of duplicated: {0} {1} \n".format(j, j+1))
+                
+                connect_code_idx.append(idx[duplicate_node[i]][j])
+                #connect_code.append(idx[duplicate_node[i]][j+1])
+
+    
+    #connect_node_unique = list(set(connect_code))
+    #connect_node_unique = connect_code
+    
+    print("connect_node: {0}\n".format(connect_code_idx))
+
+    edge_node_n1_select = [j for i, j in enumerate(edge_node_n1) if i not in connect_code_idx]
+    edge_node_n2_select = [j for i, j in enumerate(edge_node_n2) if i not in connect_code_idx]
+    
+    print("edge_node_n1_select: {0}\n".format(edge_node_n1_select))
+    print("edge_node_n2_select: {0}\n".format(edge_node_n2_select))
+    
+
+    for i in range(len(edge_node_n1_select)):
+        
+        idx = edge_node_n1_select[i]
+        
+        if i in duplicate_node:
+            pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
+        else:
+            pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
+    
+    
+    
+    
+
     print('done')
     fig.scene.disable_render = disable_render
-    return tube_surf, pts
+    return tube_surf, pts, edge_node_n1_select, edge_node_n2_select
 
 

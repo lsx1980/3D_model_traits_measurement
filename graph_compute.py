@@ -225,8 +225,9 @@ if __name__ == '__main__':
     print("Loading images...")
    
     #initialize empty numpy array
-    image_chunk = np.empty(shape = (n_samples, height, width), dtype = np.float32)
-   
+    #image_chunk = np.empty(shape = (n_samples, height, width), dtype = np.float64)
+    image_chunk = np.empty(shape = (n_samples, height, width), dtype = np.float64)
+    
     #fill 3d image chunk with binary image data
     for file_idx, image_file in enumerate(imgList):
         
@@ -269,39 +270,45 @@ if __name__ == '__main__':
     #compute edge properities 
     numer_total = G.size()
     
+    #plot the graph, use the z component to colorcode both the edges and the nodes, scale nodes according to their degree
+    #plot_graph(G,node_color_keyword='z',edge_color_keyword='z',scale_node_keyword='degree')
+    
+    tube_surf, pts, edge_node_n1_select, edge_node_n2_select = plot_graph(G, node_color_keyword='z', edge_color_keyword='z')
+    
+    #print("edge_node_unique: {0}\n".format(edge_node_unique))
+    
     edge_length = []
     edge_angle = []
     edgecount = 0
     index = []
     projection_radius = []
     
-    for n1, n2, edgedict in G.edges(data=True):
-        
-        edgecount += 1
-  
-        print("Index {0} root properities:".format(edgecount))
-        
-        print("node1 = {0}, node2 = {1}, length = {2}:".format(n1, n2, edgedict['weight']))
-        
-        (r_data, theta_data, phi_data) = trace_angle(edgedict['x'], edgedict['y'], edgedict['z'])
-        
-        #test
-        #x = [1,0]
-        #(r_data, theta_data, phi_data) = trace_angle(x, x, x)
-        
-        print("r_data = {0}, theta_data = {1}, phi_data = {2}:\n".format(r_data, theta_data, phi_data))
-        
-        index.append(edgecount)
-        edge_length.append(edgedict['weight'])
-        edge_angle.append(phi_data)
-        projection_radius.append(r_data)
-        
-
-    #plot the graph, use the z component to colorcode both the edges and the nodes, scale nodes according to their degree
-    #plot_graph(G,node_color_keyword='z',edge_color_keyword='z',scale_node_keyword='degree')
     
-    plot_graph(G, node_color_keyword='z', edge_color_keyword='z')
+    for n1, n2, edgedict in G.edges(data = True):
+        
 
+        if (edge_node_n1_select[edgecount] == n1) and (edge_node_n2_select[edgecount] == n2) :
+            
+            edgecount += 1
+            
+            print("Properities of root index {0}:".format(edgecount))
+            
+            print("node1 = {0}, node2 = {1}, length = {2} ".format(n1, n2, edgedict['weight']))
+            
+            (r_data, theta_data, phi_data) = trace_angle(edgedict['x'], edgedict['y'], edgedict['z'])
+            
+            #test
+            #x = [1,0]
+            #(r_data, theta_data, phi_data) = trace_angle(x, x, x)
+            
+            print("r_data = {0}, theta_data = {1}, phi_data = {2}:\n".format(r_data, theta_data, phi_data))
+            
+            index.append(edgecount)
+            edge_length.append(edgedict['weight'])
+            edge_angle.append(phi_data)
+            projection_radius.append(r_data)
+    
+                
     #show the binary data
     #mlab.contour3d(image_chunk.astype(np.float),contours=[.5],opacity=.5,color=(1,1,1))
     
