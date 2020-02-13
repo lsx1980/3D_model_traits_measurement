@@ -267,7 +267,7 @@ def trace_measure(fname, trace_rec, file_idx):
         (r_data, theta_data, phi_data) = trace_angle(x, y, z)
 
         # compare the distance between pointset and the start point of new trace line,
-        # connect lines if under threhold, oherwise creat and adding new trace lines
+        # connect lines if under threhold, oherwise create and adding new trace lines
         if file_idx > 0:
         
             #new_start_point =  data_array[0,[0,1,2]].reshape(1,3)

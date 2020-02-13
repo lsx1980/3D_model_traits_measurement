@@ -159,17 +159,35 @@ def asSpherical(x, y, z):
 
 def trace_angle(x, y, z):
     """compute the angle of each trace in 3D space"""
-    
-    #print(x[0],y[0],z[0])
-    #print(x[len(x)-1],y[len(y)-1],z[len(z)-1])
-    
+    '''
     cx = x[0] - x[len(x)-1]
     cy = y[0] - y[len(y)-1]
     cz = z[0] - z[len(z)-1]
+    '''
+    
+    cx = x
+    cy = y
+    cz = z
 
     (r,theta,phi) = asSpherical(cx, cy, cz)
+    #(r,theta,phi) = asSpherical(x, y, z)
     
     return r, theta, phi
+
+
+
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2':
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))*180/math.pi
+    
+    
     
 
 if __name__ == '__main__':
@@ -273,40 +291,32 @@ if __name__ == '__main__':
     #plot the graph, use the z component to colorcode both the edges and the nodes, scale nodes according to their degree
     #plot_graph(G,node_color_keyword='z',edge_color_keyword='z',scale_node_keyword='degree')
     
-    tube_surf, pts, edge_node_n1_select, edge_node_n2_select = plot_graph(G, node_color_keyword='z', edge_color_keyword='z')
+    tube_surf, pts, edge_node_n1_select, edge_node_n2_select, angle_select, length_select, projection_select = plot_graph(G, node_color_keyword='z', edge_color_keyword='z')
     
     #print("edge_node_unique: {0}\n".format(edge_node_unique))
-    
+    '''
     edge_length = []
     edge_angle = []
     edgecount = 0
     index = []
     projection_radius = []
+    '''
+    index = []
+    edgecount = len(edge_node_n1_select)
     
-    
-    for n1, n2, edgedict in G.edges(data = True):
+    for i in range(len(edge_node_n1_select)):
         
-
-        if (edge_node_n1_select[edgecount] == n1) and (edge_node_n2_select[edgecount] == n2) :
-            
-            edgecount += 1
-            
-            print("Properities of root index {0}:".format(edgecount))
-            
-            print("node1 = {0}, node2 = {1}, length = {2} ".format(n1, n2, edgedict['weight']))
-            
-            (r_data, theta_data, phi_data) = trace_angle(edgedict['x'], edgedict['y'], edgedict['z'])
-            
-            #test
-            #x = [1,0]
-            #(r_data, theta_data, phi_data) = trace_angle(x, x, x)
-            
-            print("r_data = {0}, theta_data = {1}, phi_data = {2}:\n".format(r_data, theta_data, phi_data))
-            
-            index.append(edgecount)
-            edge_length.append(edgedict['weight'])
-            edge_angle.append(phi_data)
-            projection_radius.append(r_data)
+        print("Properities of root index {0}:".format(edgecount))
+        
+        n1 = edge_node_n1_select[i]
+        n2 = edge_node_n2_select[i]
+        
+        print("node1 = {0}, node2 = {1} ".format(n1, n2))
+        print("angle = {0}, length = {1} ".format(angle_select[i], length_select[i]))
+        print("projection_radius = {0}\n ".format(projection_select[i]))
+        
+        index.append(i+1)
+    
     
                 
     #show the binary data
@@ -347,7 +357,7 @@ if __name__ == '__main__':
     
     sheet = wb.active
 
-    for row in zip(index, edge_length, edge_angle, projection_radius):
+    for row in zip(index, length_select, angle_select, projection_select):
         sheet.append(row)
     
     

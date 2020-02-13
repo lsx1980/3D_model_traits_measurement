@@ -11,6 +11,10 @@ import math
 
 from collections import Counter, defaultdict
 
+from scipy.spatial import distance
+from numpy import random
+
+
 
 def get_nhood(img):
     """
@@ -306,36 +310,12 @@ def get_length(x_, y_, z_):
         return 0
 
 
-def find_repeating(lst, count):
-    ret = []
-    counts = [None] * len(lst)
-    for i in lst:
-        if counts[i] is None:
-            counts[i] = i
-        elif i == counts[i]:
-            ret += [i]
-            if len(ret) == count:
-                return ret
-
-def find_duplicates(lst):
-    
-    sort_list = sorted(set(lst))
-    dup_list =[]
-    idx = []
-    
-    for i in range(len(sort_list)):
-        if (lst.count(sort_list[i]) > 1 ):
-            dup_list.append(sort_list[i])
-            idx.append(i)
-            
-    return dup_list,idx
-
-
 def duplicates(lst):
 
     cnt = Counter(lst)
     
     return [key for key in cnt.keys() if cnt[key]> 1]
+
 
 def indices(lst, items= None):
     
@@ -359,19 +339,36 @@ def asSpherical(x, y, z):
     
     return r, elevation, azimuth
 
+
+
 def trace_angle(x, y, z):
     """compute the angle of each trace in 3D space"""
-    
-    #print(x[0],y[0],z[0])
-    #print(x[len(x)-1],y[len(y)-1],z[len(z)-1])
-    
+    '''
     cx = x[0] - x[len(x)-1]
     cy = y[0] - y[len(y)-1]
     cz = z[0] - z[len(z)-1]
 
     (r,theta,phi) = asSpherical(cx, cy, cz)
+    '''
+    (r,theta,phi) = asSpherical(x, y, z)
     
     return r, theta, phi
+
+
+
+
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2':
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))*180/math.pi
+    
+
 
 def plot_graph( G,
                node_size=1, node_color=(1, 1, 1), scale_node_keyword=None,
@@ -435,7 +432,8 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     edge_node_n1 = []
     edge_node_n2 = []
     edge_angle = []
-    
+    edge_length = []
+    edge_projection = []
 
     for node in G.nodes():
         xn.append(G.nodes[node]['x'])
@@ -488,13 +486,28 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         else:
             edge_r += [tube_radius] * (l)
             
-            
-        (r_data, theta_data, phi_data) = trace_angle(edgedict['x'], edgedict['y'], edgedict['z'])
+        
+        #coord_n1 = (xn[n1], yn[n1], zn[n1])
+        #coord_n2 = (xn[n2], yn[n2], zn[n2])
+        
+        #compute angle for each edge
+        vector_n1_n2 = (xn[n2]-xn[n1] , yn[n2]-yn[n1], zn[n2]-zn[n1])
+        
+        (r_data, theta_data, phi_data) = trace_angle(xn[n2]-xn[n1] , yn[n2]-yn[n1], zn[n2]-zn[n1])
+        
+        reference_vector = (1, 0, 0)
+        
+        reference_vector_angle = angle_between(vector_n1_n2, reference_vector)
+        
+        #print("Angle is {0}:".format(reference_vector_angle))
+        #print("r_data = {0}, theta_data = {1}, phi_data = {2}:\n".format(r_data, theta_data, phi_data))
 
         edge_node_n1.append(n1)
         edge_node_n2.append(n2)
        
-        edge_angle.append(abs(phi_data))
+        edge_angle.append((reference_vector_angle))
+        edge_length.append(edgedict['weight'])
+        edge_projection.append(r_data)
         
     #pdb.set_trace()
     #pot network
@@ -621,7 +634,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     
     connect_code_idx = []
     
-    angle_thresh = 4
+    angle_thresh = 60
 
     for i in range(len(idx)):
         
@@ -631,8 +644,9 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         angle_rec = []
         
         for element in idx[duplicate_node[i]]:
-            #print(edge_angle[element])
             
+            #print("element = {0}:".format(element))
+
             angle_rec.append(edge_angle[element])
             
             #print(edge_node_n1[element])
@@ -646,7 +660,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         
         for j in range(len(angle_diff)):
             
-            if angle_diff[j] > angle_thresh:
+            if angle_diff[j] < angle_thresh:
                 
                 print(angle_rec[j],angle_rec[j+1])
                 #print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j]))
@@ -668,7 +682,35 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     print("edge_node_n1_select: {0}\n".format(edge_node_n1_select))
     print("edge_node_n2_select: {0}\n".format(edge_node_n2_select))
     
+    '''
+    from operator import itemgetter 
+    
+    n1_point =  np.asarray([itemgetter(*edge_node_n1_select)(xn), itemgetter(*edge_node_n1_select)(yn), itemgetter(*edge_node_n1_select)(zn)]).transpose()
+    n2_point =  np.asarray([itemgetter(*edge_node_n2_select)(xn), itemgetter(*edge_node_n2_select)(yn), itemgetter(*edge_node_n2_select)(zn)]).transpose()
+        
+    # compute the euclidean between 3d point and pointset
+    #dst = distance.cdist(n1_point, n2_point, 'euclidean')
+    
 
+  
+    #path = nx.shortest_path(G, source=9)
+    
+    # draw path in red
+    #path = nx.shortest_path(G,source=14,target=16)
+
+    print(n1_point.shape)
+    print(n2_point.shape)
+    print("n1 point: {0}\n".format(n1_point))
+    print("n2 point: {0}\n".format(n2_point))
+    #print("p: {0}\n".format(p))
+    #print(path)
+    
+    '''
+    angle_select = []
+    length_select = []
+    projection_select = []
+    
+    #render seletced nodes with text index                
     for i in range(len(edge_node_n1_select)):
         
         idx = edge_node_n1_select[i]
@@ -677,13 +719,26 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
             pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
         else:
             pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
+        
+        #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(edge_angle[idx]), scale=(2, 2, 2), color=(1, 0.0, 0.0))
+        
+        
+        #print("edge_angle = {0} ".format(edge_angle[idx]))
+        
+        angle_select.append(edge_angle[idx])
+        length_select.append(edge_length[idx])
+        projection_select.append(edge_projection[idx])
+        
+    angle_select = [0 if math.isnan(x) else x for x in angle_select]
+ 
+    #print("angle_select = {0}\n ".format(angle_select))
+    #print("length_select = {0}\n ".format(length_select))
+    #print("projection_select = {0}\n ".format(projection_select))
     
-    
-    
-    
-
     print('done')
     fig.scene.disable_render = disable_render
-    return tube_surf, pts, edge_node_n1_select, edge_node_n2_select
+    return tube_surf, pts, edge_node_n1_select, edge_node_n2_select, angle_select, length_select, projection_select
+    
+    
 
 
