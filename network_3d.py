@@ -318,7 +318,7 @@ def duplicates(lst):
 
 
 def indices(lst, items= None):
-    
+    """return index of repeat value in a list"""
     items, ind = set(lst) if items is None else items, defaultdict(list)
     
     for i, v in enumerate(lst):
@@ -330,13 +330,16 @@ def indices(lst, items= None):
 
 def asSpherical(x, y, z):
     """coordinates transormation from cartesian coords to sphere coord system"""
-
+    #eg. defaultdict(<class 'list'>, {10: [10, 11], 11: [12, 13], 12: [14, 15, 16, 17, 18]})
     r = math.sqrt(x*x + y*y + z*z)
-    
-    elevation = math.acos(z/r)*180/math.pi #to degrees
-    
-    azimuth = np.arctan2(y,x)*180/math.pi
-    
+    if r > 0 :
+        elevation = math.acos(z/r)*180/math.pi #to degrees
+        
+        azimuth = np.arctan2(y,x)*180/math.pi
+    else:
+        elevation = 0
+        azimuth = 0
+        
     return r, elevation, azimuth
 
 
@@ -354,12 +357,12 @@ def trace_angle(x, y, z):
     
     return r, theta, phi
 
-
-
-
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
-    return vector / np.linalg.norm(vector)
+    if np.linalg.norm(vector) > 0:
+        return vector / np.linalg.norm(vector)
+    else:
+        return vector 
 
 def angle_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2':
@@ -368,6 +371,48 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))*180/math.pi
     
+
+def lineseg_dist(p, a, b):
+    """ Returns the distance the distance from point p to line segment [a,b]. p, a and b are np.arrays. 
+    """
+    if np.all(a - b):
+        return np.linalg.norm(p - a, axis=0)
+    
+    if np.array_equal(b, a):
+        return 0
+    else:
+        
+        # normalized tangent vector
+        d = np.divide(b - a, np.linalg.norm(b - a))
+
+        # signed parallel distance components
+        s = np.dot(a - p, d)
+        t = np.dot(p - b, d)
+
+        # clamped parallel distance
+        h = np.maximum.reduce([s, t, 0])
+
+        # perpendicular distance component
+        c = np.cross(p - a, d)
+
+        return np.hypot(h, np.linalg.norm(c))
+
+
+# Function to Detection Outlier on one-dimentional datasets.
+def find_anomalies(data):
+    
+    # Set upper and lower limit to 3 standard deviation
+    data_std = np.std(data, axis=0)
+    data_mean = np.mean(data, axis=0)
+    anomaly_cut_off = data_std * 2
+    
+    #lower_limit  = data_mean - anomaly_cut_off 
+    #upper_limit = data_mean + anomaly_cut_off
+    
+    upper_limit = np.percentile(data, 75)
+    lower_limit = np.percentile(data, 25)
+    
+    return lower_limit,upper_limit
 
 
 def plot_graph( G,
@@ -434,6 +479,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     edge_angle = []
     edge_length = []
     edge_projection = []
+
 
     for node in G.nodes():
         xn.append(G.nodes[node]['x'])
@@ -502,13 +548,20 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         #print("Angle is {0}:".format(reference_vector_angle))
         #print("r_data = {0}, theta_data = {1}, phi_data = {2}:\n".format(r_data, theta_data, phi_data))
 
+        #record every node and edge properities 
         edge_node_n1.append(n1)
         edge_node_n2.append(n2)
        
         edge_angle.append((reference_vector_angle))
-        edge_length.append(edgedict['weight'])
+        edge_length.append(abs(edgedict['weight']))
         edge_projection.append(r_data)
-        
+
+    lower_limit, upper_limit = find_anomalies(np.asarray(edge_length))
+    
+    print("edge_length is {0} \n:".format(edge_length))
+    print("lower_limit upper_limit is {0} {1}:\n".format(lower_limit,upper_limit))
+    
+            
     #pdb.set_trace()
     #pot network
     fig = mlab.gcf()
@@ -617,24 +670,28 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     # ------------------------------------------------------------------------
     # Plot the edge index at the first node location
     
-    print("edge_node_n1: {0}".format(edge_node_n1))
-    print("edge_node_n2: {0}".format(edge_node_n2))
-    #print(edge_node_n2)
-    #print(edge_angle)
+    print("edge_node_n1: {0}\n".format(edge_node_n1))
+    print("edge_node_n2: {0}\n".format(edge_node_n2))
     
+    print("length: {0} {1}\n".format(len(edge_angle),len(edge_node_n1)))
+
+    
+    
+    # ------------------------------------------------------------------------
+    # Select edges from shared nodes
     duplicate_node = duplicates(edge_node_n1)
     
-    idx = indices(edge_node_n1, duplicates(edge_node_n1))
+    idx = indices(edge_node_n1, duplicate_node)
     
-    print("duplicate_node: {0}".format(duplicate_node))
+    print("duplicate_node: {0}\n".format(duplicate_node))
+    print("duplicate index: {0} \n".format(idx))
     
-    print("duplicate index: {0}".format(idx))
-    
-    #print("\n")
-    
+    #connect node index in edge_node_n1 list
     connect_code_idx = []
     
-    angle_thresh = 60
+    angle_thresh = 20
+    
+    dis_thresh = lower_limit
 
     for i in range(len(idx)):
         
@@ -654,19 +711,20 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
             
         angle_diff = np.diff(angle_rec)
         
-        #print("angle_rec =  {0}".format(angle_rec))
-        #print("angle_diff = {0}".format(angle_diff))
+        print("angle_rec =  {0}".format(angle_rec))
+        print("angle_diff = {0}".format(angle_diff))
         
         
         for j in range(len(angle_diff)):
             
             if angle_diff[j] < angle_thresh:
                 
+                '''
                 print(angle_rec[j],angle_rec[j+1])
-                #print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j]))
-                #print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j+1]))
-                #print("Index of duplicated: {0} {1} \n".format(j, j+1))
-                
+                print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j]))
+                print("Index of duplicated: {0} \n".format(idx[duplicate_node[i]][j+1]))
+                print("Index of duplicated: {0} {1} \n".format(j, j+1))
+                '''
                 connect_code_idx.append(idx[duplicate_node[i]][j])
                 #connect_code.append(idx[duplicate_node[i]][j+1])
 
@@ -678,66 +736,118 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
 
     edge_node_n1_select = [j for i, j in enumerate(edge_node_n1) if i not in connect_code_idx]
     edge_node_n2_select = [j for i, j in enumerate(edge_node_n2) if i not in connect_code_idx]
+    edge_angle_select = [j for i, j in enumerate(edge_angle) if i not in connect_code_idx]
+    edge_length_select = [j for i, j in enumerate(edge_length) if i not in connect_code_idx]
     
     print("edge_node_n1_select: {0}\n".format(edge_node_n1_select))
     print("edge_node_n2_select: {0}\n".format(edge_node_n2_select))
+    print("edge_angle_select: {0}\n".format(edge_angle_select))
+    print("edge_length_select: {0}\n".format(edge_length_select))
     
-    '''
-    from operator import itemgetter 
+    print("edge_node_n1_select length: {0}\n".format(len(edge_node_n2_select)))
     
-    n1_point =  np.asarray([itemgetter(*edge_node_n1_select)(xn), itemgetter(*edge_node_n1_select)(yn), itemgetter(*edge_node_n1_select)(zn)]).transpose()
-    n2_point =  np.asarray([itemgetter(*edge_node_n2_select)(xn), itemgetter(*edge_node_n2_select)(yn), itemgetter(*edge_node_n2_select)(zn)]).transpose()
+    # ------------------------------------------------------------------------
+    # Select edges with threshold from distance between edges
+    #    
+    
+    close_edge_nd = []
+    
+    for i in range(len(edge_node_n1_select)):
         
-    # compute the euclidean between 3d point and pointset
-    #dst = distance.cdist(n1_point, n2_point, 'euclidean')
-    
+        idx_n1 = edge_node_n1_select[i]
+        idx_n2 = edge_node_n2_select[i]
+        
+        #n1_coord = np.array([xn[idx_n1], yn[idx_n1], zn[idx_n1]])
+        #n2_coord = np.array([xn[idx_n2], yn[idx_n2], zn[idx_n2]])
 
-  
-    #path = nx.shortest_path(G, source=9)
+        n12_mid = np.mean([np.array([xn[idx_n1], yn[idx_n1], zn[idx_n1]]), np.array([xn[idx_n2], yn[idx_n2], zn[idx_n2]])], axis = 0)
+        
+        for j in range(len(edge_node_n1_select)):
+            
+            if j == i :
+                
+                dis_P2line = 10000
+                #print("self_dis = {0}\n".format(dis_P2line))
+           
+            else: 
+                
+                n1_coord_line = np.array([xn[edge_node_n1_select[j]], yn[edge_node_n1_select[j]], zn[edge_node_n1_select[j]]])
+                n2_coord_line = np.array([xn[edge_node_n2_select[j]], yn[edge_node_n2_select[j]], zn[edge_node_n2_select[j]]])
+                
+                dis_P2line = lineseg_dist(n12_mid, n1_coord_line, n2_coord_line)
+        
+                #print("n1_coord: {0}\n".format(n1_coord_line))
+                #print("n2_coord: {0}\n".format(n2_coord_line))
+                #print("n12_mid: {0}\n".format(n12_mid))
+                #print("distance {0} {1} = {2}\n".format(i, j, dis_P2line))
+                try:
+                    dif_angle = abs(edge_angle_select[i] - edge_angle_select[j])
+                except (IndexError, ValueError):
+                    dif_angle = 100
+                
+                try:
+                    if (dis_P2line < dis_thresh) and (dif_angle) < angle_thresh:
+                    #if (dis_P2line < dis_thresh) or (edge_length_select[i] < dis_thresh):
+                        close_edge_nd.append(i)
+                except (IndexError, ValueError):
+                    dif_angle = 100
     
-    # draw path in red
-    #path = nx.shortest_path(G,source=14,target=16)
+    close_edge_nd = np.unique(close_edge_nd)
+    
+    print("close_edge_nd index = {0}\n".format(close_edge_nd))
 
-    print(n1_point.shape)
-    print(n2_point.shape)
-    print("n1 point: {0}\n".format(n1_point))
-    print("n2 point: {0}\n".format(n2_point))
-    #print("p: {0}\n".format(p))
-    #print(path)
+    #combined_nd = connect_code_idx + close_edge_nd 
     
-    '''
+    edge_node_n1_select_final = [j for i, j in enumerate(edge_node_n1_select) if i not in close_edge_nd]
+    edge_node_n2_select_final = [j for i, j in enumerate(edge_node_n2_select) if i not in close_edge_nd]
+    edge_angle_select_final = [j for i, j in enumerate(edge_angle_select) if i not in close_edge_nd]
+    edge_length_select_final = [j for i, j in enumerate(edge_length_select) if i not in close_edge_nd]
+    
+    
+    print("edge_node_n1_select_final: {0}\n".format(edge_node_n1_select_final))
+    print("edge_node_n2_select final: {0}\n".format(edge_node_n2_select_final))
+    #print("edge_node_n1_select: {0}\n".format(len(edge_node_n1_select)))
+    
     angle_select = []
     length_select = []
     projection_select = []
     
     #render seletced nodes with text index                
-    for i in range(len(edge_node_n1_select)):
+    for i in range(len(edge_node_n1_select_final)):
         
-        idx = edge_node_n1_select[i]
+        idx = edge_node_n1_select_final[i]
         
         if i in duplicate_node:
             pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
         else:
             pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
         
-        #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(edge_angle[idx]), scale=(2, 2, 2), color=(1, 0.0, 0.0))
-        
-        
-        #print("edge_angle = {0} ".format(edge_angle[idx]))
-        
-        angle_select.append(edge_angle[idx])
-        length_select.append(edge_length[idx])
-        projection_select.append(edge_projection[idx])
-        
+        '''
+        try:
+            pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(edge_length_select_final[i]), scale=(2, 2, 2), color=(1, 0.0, 0.0))
+        except (IndexError, ValueError):
+            pass 
+        '''
+      
+        try:
+            angle_select.append(edge_angle[i])
+            length_select.append(edge_length[i])
+            projection_select.append(edge_projection[i])
+        except IndexError:
+            pass
+ 
     angle_select = [0 if math.isnan(x) else x for x in angle_select]
  
     #print("angle_select = {0}\n ".format(angle_select))
     #print("length_select = {0}\n ".format(length_select))
     #print("projection_select = {0}\n ".format(projection_select))
     
-    print('done')
+    print('graph rendering finished')
     fig.scene.disable_render = disable_render
-    return tube_surf, pts, edge_node_n1_select, edge_node_n2_select, angle_select, length_select, projection_select
+    
+
+    
+    return tube_surf, pts, edge_node_n1_select_final, edge_node_n2_select_final, edge_angle_select_final, edge_length_select_final, projection_select
     
     
 

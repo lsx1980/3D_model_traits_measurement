@@ -304,18 +304,22 @@ if __name__ == '__main__':
     index = []
     edgecount = len(edge_node_n1_select)
     
-    for i in range(len(edge_node_n1_select)):
-        
-        print("Properities of root index {0}:".format(edgecount))
+    for i in range(edgecount):
         
         n1 = edge_node_n1_select[i]
         n2 = edge_node_n2_select[i]
         
-        print("node1 = {0}, node2 = {1} ".format(n1, n2))
-        print("angle = {0}, length = {1} ".format(angle_select[i], length_select[i]))
-        print("projection_radius = {0}\n ".format(projection_select[i]))
+        try:
+            print("Properities of root index {0}:".format(i))
+            print("node1 = {0}, node2 = {1} ".format(n1, n2))
+            print("angle = {0}, length = {1} ".format(angle_select[i], length_select[i]))
+            print("projection_radius = {0}\n ".format(projection_select[i]))
+            
+            index.append(i+1)
+            
+        except IndexError:
+            pass
         
-        index.append(i+1)
     
     
                 
@@ -361,7 +365,7 @@ if __name__ == '__main__':
         sheet.append(row)
     
     
-    sheet.cell(row = 2, column = 5).value = numer_total
+    sheet.cell(row = 2, column = 5).value = len(index)
         
     #save the csv file
     wb.save(trait_file)

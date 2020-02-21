@@ -70,6 +70,31 @@ def mkdir(path):
         #print path+' path exists!'
         return False
 
+def trace_angle(x, y, z):
+    """compute the angle of each trace in 3D space"""
+    '''
+    cx = x[0] - x[len(x)-1]
+    cy = y[0] - y[len(y)-1]
+    cz = z[0] - z[len(z)-1]
+
+    (r,theta,phi) = asSpherical(cx, cy, cz)
+    '''
+    (r,theta,phi) = asSpherical(x, y, z)
+    
+    return r, theta, phi
+
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2':
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))*180/math.pi
+
+
 
 def angle_vector(v1, v2, acute):
     """compute the angle between two vectors"""
@@ -194,7 +219,7 @@ def lsq_line_fit(data):
    
 
 def fit_line(x,y,z):
-    """fit he trace points as a two points line """
+    """fit the trace points as a two points line """
     
     data_fit = np.concatenate((x[:, np.newaxis], y[:, np.newaxis], z[:, np.newaxis]), axis=1)
 
