@@ -45,6 +45,11 @@ import math
 from openpyxl import load_workbook
 from openpyxl import Workbook
 
+import dask
+import dask.array as da
+
+
+
 
 def mkdir(path):
     """Create result folder"""
@@ -233,17 +238,39 @@ if __name__ == '__main__':
         sys.exit(0)
     
    
-    #bar = progressbar.ProgressBar(maxval = n_samples, widgets = [progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
     
+    ##################################################################
+    #Loading image dask array
+    #sample = imageio.imread(imgList[0])
+    
+    lazy_arrays = [dask.delayed(load_image) (fn) for fn in imgList]
+    lazy_arrays = [da.from_delayed(x, shape = (height, width), dtype = np.float64) for x in lazy_arrays]
+    
+    image_chunk = da.stack(lazy_arrays)
+    
+    #image_chunk = image_chunk.compute()
+    
+    print("dask image chunk size : {0}".format(str(image_chunk.shape)))
+    
+    
+    
+    ##################################################################
+    #End of loading images 
+    
+    
+    '''
+    ##################################################################
+    #Loading image using numpy empty array 
+
     #progress bar display
     bar = progressbar.ProgressBar(maxval = n_samples)
-    
-    #bar.start()
-    
+    #bar = progressbar.ProgressBar(maxval = n_samples, widgets = [progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+     
     print("Loading images...")
-   
+    
+    bar.start()
+    
     #initialize empty numpy array
-    #image_chunk = np.empty(shape = (n_samples, height, width), dtype = np.float64)
     image_chunk = np.empty(shape = (n_samples, height, width), dtype = np.float64)
     
     #fill 3d image chunk with binary image data
@@ -254,28 +281,32 @@ if __name__ == '__main__':
         bar.update(file_idx+1)
         
         sleep(0.1)
-
+    
+    
     bar.finish()
     
     print("image chunk size : {0}".format(str(image_chunk.shape)))
     
+    
     #count number and frequency of 1 and 0
-    uniqueValues, occurCount = np.unique(image_chunk, return_counts=True)
+    uniqueValues, occurCount = np.unique(image_chunk, return_counts = True)
         
     print("Unique Values : " , uniqueValues)
-        
     print("Occurrence Count : ", occurCount)
+    ##################################################################
+    #End of loading images 
+    '''
     
     
     #skeletonize
     skel = skeletonize(image_chunk)
     
-    '''
-    #build graph from skeleton
-    graph = sknw.build_sknw(skel)
     
-    mayavi_visualize(graph, image_chunk)
-    '''
+    #build graph from skeleton
+    #graph = sknw.build_sknw(skel)
+    
+    #mayavi_visualize(graph, image_chunk)
+    
     
     
     skel = skel.astype(np.bool) #data needs to be bool
@@ -291,16 +322,12 @@ if __name__ == '__main__':
     #plot the graph, use the z component to colorcode both the edges and the nodes, scale nodes according to their degree
     #plot_graph(G,node_color_keyword='z',edge_color_keyword='z',scale_node_keyword='degree')
     
-    tube_surf, pts, edge_node_n1_select, edge_node_n2_select, angle_select, length_select, projection_select = plot_graph(G, node_color_keyword='z', edge_color_keyword='z')
+    edge_node_n1_select, edge_node_n2_select, angle_select, length_select, projection_select = plot_graph(G, node_color_keyword = 'x', edge_color_keyword = 'x')
+    
+    #tube_surf, pts, edge_node_n1_select, edge_node_n2_select, angle_select, length_select, projection_select = plot_graph(G, node_color_keyword = 'z', edge_color_keyword = 'z')
     
     #print("edge_node_unique: {0}\n".format(edge_node_unique))
-    '''
-    edge_length = []
-    edge_angle = []
-    edgecount = 0
-    index = []
-    projection_radius = []
-    '''
+
     index = []
     edgecount = len(edge_node_n1_select)
     
@@ -390,4 +417,9 @@ if __name__ == '__main__':
     ##################################################################
     #End of writing measured parameters as excel file 
     
+
+    import resource
+     # monitor memory usage 
+    rusage_denom = 1024.0
     
+    print("Memory usage: {0} MB\n".format(int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom)))

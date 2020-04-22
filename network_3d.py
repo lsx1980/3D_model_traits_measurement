@@ -5,7 +5,7 @@ import collections
 from scipy.ndimage import label
 from mayavi import mlab
 import numpy as np
-import sys
+#import sys
 import pdb
 import math
 
@@ -14,7 +14,8 @@ from collections import Counter, defaultdict
 from scipy.spatial import distance
 from numpy import random
 
-
+import progressbar
+from time import sleep
 
 def get_nhood(img):
     """
@@ -32,6 +33,7 @@ def get_nhood(img):
     inds : of all True voxels (raveled)
     """
     print('calculating neighborhood')
+    
     #check if padded
     assert img.dtype==np.bool
     assert img[0,:,:].max()==0
@@ -50,7 +52,6 @@ def get_nhood(img):
     
     s0, s1, s2 = np.array(img.shape) -2
     assert s0 * s1 * s2 < np.iinfo(nhi.dtype).max, 'the array is too big, fix datatype of nhi'
-        
     
     for xx in range(0, 3):
         for yy in range(0, 3):
@@ -64,7 +65,7 @@ def get_nhood(img):
                 
     # calculate number of neighbors (+1)
     nhood = np.sum(nhi > 0, axis=-1, dtype=np.uint8)
-    
+   
     print('done')
     return nhood, nhi, inds
 
@@ -91,6 +92,8 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
     G : networkx.Graph
         
         """
+    
+    print("Creating graph...")
     
     assert skel.dtype==np.bool
     if pad:
@@ -148,15 +151,29 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
             for idx, val in zip(np.arange(steps[i], steps[i + 1], dtype=np.uint64), inspacingavel[steps[i]:steps[i + 1]]):
                 if not val == 0:
                     node_inds_all[val].append(idx)
-    N=len(node_inds_all.keys())
+    
+    
+    N = len(node_inds_all.keys())
+    
+    print("Processing graph nodes...")
+    #progress bar display
+    bar = progressbar.ProgressBar(maxval = N)
+    
+    bar.start()
+    
     for i in node_inds_all.keys():
+
         #sys.stdout.write("\rpercentage: " + str(100 * i / N) + "%")
-        sys.stdout.write("\rpercentage: " + '{:.2%}'.format(i / N))
-        sys.stdout.flush()
+        #sys.stdout.write("\rpercentage: " + '{:.2%}'.format(i / N))
+        #sys.stdout.flush()
+        
         node_inds = node_inds_all[i]
         i -= 1  # to have n_v starting at 0
         x, y, z = np.lib.unravel_index(node_inds, nodes.shape)
-
+        
+        bar.update(i+1)
+        sleep(0.1)
+        
         xmean = x.mean()
         ymean = y.mean()
         zmean = z.mean()
@@ -170,7 +187,11 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
         G.add_node(i, **{'x': xmean * spacing[0] + origin[0], 'y': ymean * spacing[1] + origin[1], 'z': zmean * spacing[
                    2] + origin[2], 'multinode': mn,  'idx': node_inds})
         # find all canal vox in nb of all node idx
+ 
     print(' nodes done, track edges')
+    
+    #bar.finish()
+    
     # del node_inds_all
     nodex = nx.get_node_attributes(G, 'x')
     nodey = nx.get_node_attributes(G, 'y')
@@ -178,21 +199,36 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
     edge_inds = []
 
     # now, find all edges
-
+    
+  
+    
     e_ravel = e_nb.ravel()  # might make it faster
     node_list = G.nodes()
     N=len(G.nodes())
     alledges=[]
+    
+    print("Processing graph edges...")
+    #progress bar display
+    bar = progressbar.ProgressBar(maxval = N)
+    
+    bar.start()
+    
     for i, nd in G.nodes(data=True):
+        
         #sys.stdout.write("\rpercentage: " + str(100 * i / N) + "%")
-        sys.stdout.write("\rpercentage: " +  '{:.2%}'.format(i / N))
-        sys.stdout.flush()
+        #sys.stdout.write("\rpercentage: " +  '{:.2%}'.format(i / N))
+        #sys.stdout.flush()
+        
+        
         # if i ==46:
         # pdb.set_trace()
         node_inds = nd['idx']
         if nhood[inds==node_inds[0]]==1:
             continue
 
+        bar.update(i+1)
+        sleep(0.1)
+        
         # find all edge voxels which are neighbors of node i
         nbs = np.in1d(e_ravel, node_inds).reshape(e_nb.shape)
         e_n, pos = np.where(nbs)
@@ -228,6 +264,8 @@ nodevoxels (neighborhood >3) which are not seperated by edge voxels (neighborhoo
             
     G.add_edges_from(alledges)
     print(' edges done')
+    
+    #bar.finish()
     
 
     return G
@@ -416,15 +454,14 @@ def find_anomalies(data):
 
 
 def plot_graph( G,
-               node_size=1, node_color=(1, 1, 1), scale_node_keyword=None,
-               node_color_keyword=None, tube_radius=.4, edge_color=(1, 1, 1),
-               edge_color_keyword=None, edge_radius_keyword=None,
-                edge_colormap='jet', **kwargs):
+               node_size = 1, node_color = (1, 1, 1), scale_node_keyword = None,
+               node_color_keyword = None, tube_radius = .4, edge_color = (1, 1, 1),
+               edge_color_keyword = None, edge_radius_keyword = None,
+                edge_colormap = 'jet', **kwargs):
                     
-    """ 3D plot of a 3D  network, inspired by a code snipped from from Gael Varoquaux posted at
-https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
-  opposed to the original code, where nodes are connected by straight lines, this function uses a list of coordinates to visualize a network which might represent a 3D skeleton
- For both, edges and nodes the size and the color can be used to visualize a parameter of the attribute dictionary, for edges this needs to be either a a number per edge, or a sequence with the length equal to the length of coordinates
+    """ 3D plot of a 3D  network, this function uses a list of coordinates to visualize a network which might represent a 3D skeleton
+ For both, edges and nodes the size and the color can be used to visualize a parameter of the attribute dictionary, 
+ for edges this needs to be either a a number per edge, or a sequence with the length equal to the length of coordinates
 
         Parameters
         ----------
@@ -440,16 +477,21 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         scale_node_keyword : string or None 
             if None, constant sizes are used, otherwise 
                 the nodes are scaled with float given in G.node[i][scale_node_keyword] could also be 'degree'
+                
         node_color_keyword: string or None
             if None is given node spheres have the same color, otherwise the float value of G.node[i][node_color_keyword] is used in cobination with a defauld colormap
+            
         edge_color_keyword : string or None
             if None use edgecolor, otherwise G[i][j][edge_color_keyword] is used to colorecode this value or list of values
+            
         edge_radius_keyword : string or None
             if None use edge_radius, otherwise Ge[i][j][edge_radius_keyword] is used to vary the radius according to  this value or list of values
+            
         Returns
         -------
         tube_surf : tvtk actor
             actor of the edges
+            
         pts : tvtk actor
             actor of the nodes
     """ 
@@ -491,6 +533,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     for n1, n2, edgedict in G.edges(data=True):
 
         edgecount += 1
+        
         xstart.extend(edgedict['x'])
         xstop.extend(edgedict['x'])
         ystart.extend(edgedict['y'])
@@ -505,22 +548,32 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         line.insert(0, l)
         lines.extend(line)
         i += l
+                
+        #print("edgedict[edge_color_keyword] is {0} \n:".format(edgedict[edge_color_keyword]))
+        
+        edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))*np.mean(edgedict[edge_color_keyword])
+        
+        #edgedict_temp = np.arange(len(edgedict[edge_color_keyword]))
         
         #color
         if edge_color_keyword is None:
-            edge_c += [1] * (l)
+            edge_c += [1] * (l) 
 
-        elif  edge_color_keyword not in edgedict.keys():
-            edge_c += [1] * (l)
-
+        elif edge_color_keyword not in edgedict.keys():
+            edge_c += [1] * (l) 
+            
         else:
             
             if len(edgedict[edge_color_keyword]) == 1:
-                edge_c.extend([edgedict[edge_color_keyword]] * (l))
+                #edge_c.extend([edgedict[edge_color_keyword]] * (l))
+                edge_c.extend([edgedict_temp] * (l))
             
             else:
                 assert len(edgedict[edge_color_keyword]) == len(edgedict['x'])
-                edge_c.extend(edgedict[edge_color_keyword].tolist())
+                #edge_c.extend(edgedict[edge_color_keyword].tolist())
+                edge_c.extend(edgedict_temp.tolist())
+                
+        #print("edge_c after is {0} \n:".format(edge_c))
 
         #radius
         if edge_radius_keyword in edgedict.keys():
@@ -558,8 +611,11 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
 
     lower_limit, upper_limit = find_anomalies(np.asarray(edge_length))
     
+    print("edge_count is {0} \n:".format(edgecount))
     print("edge_length is {0} \n:".format(edge_length))
     print("lower_limit upper_limit is {0} {1}:\n".format(lower_limit,upper_limit))
+    
+    #print("lines is {0} :\n".format(len(lines)))
     
             
     #pdb.set_trace()
@@ -568,6 +624,9 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     disable_render = fig.scene.disable_render
     fig.scene.disable_render = True
 
+    # ------------------------------------------------------------------------
+    # render edges
+    #    
     edge_c = np.array(edge_c)
     if np.isinf(edge_c).any():
         edge_c[np.isinf(edge_c)] = np.nan
@@ -588,7 +647,8 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     edges_src.mlab_source.dataset.lines = cell_array
 
     edges_src.mlab_source.update()
-
+    
+    
     if tube_radius is not None:
         #edges_src.mlab_source.dataset.point_data.vectors = np.abs(
         #        np.array([edge_r,edge_r,edge_r]).T)
@@ -603,7 +663,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     else:
         tubes = edges_src
     
-    tube_surf = mlab.pipeline.surface(mlab.pipeline.set_active_attribute(tubes, point_scalars='scalars'), colormap=edge_colormap, color=edge_color, **kwargs)
+    tube_surf = mlab.pipeline.surface(mlab.pipeline.set_active_attribute(tubes, point_scalars='scalars'), colormap = edge_colormap, color = edge_color, **kwargs)
     
     tubes.children[0].point_scalars_name='scalars'
     
@@ -614,7 +674,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     #pdb.set_trace()    
     if not node_size:
         return tube_surf, None
-
+    
 
     # ------------------------------------------------------------------------
     # Plot the nodes
@@ -653,7 +713,7 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
             else:
                 node_color_scalar = len(xn) * [1]
 
-            pts = mlab.quiver3d(np.array(xn).ravel(), np.array(yn).ravel(), np.array(zn).ravel(),s,s,s, scalars=np.array(node_color_scalar).ravel(), mode='sphere',scale_factor=node_size,resolution=16)
+            pts = mlab.quiver3d(np.array(xn).ravel(), np.array(yn).ravel(), np.array(zn).ravel(),s,s,s, scalars=np.array(node_color_scalar).ravel(), mode = 'sphere', scale_factor = node_size,resolution=16)
             
             '''
             for i in range(len(xn)):
@@ -670,11 +730,11 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     # ------------------------------------------------------------------------
     # Plot the edge index at the first node location
     
+    '''
     print("edge_node_n1: {0}\n".format(edge_node_n1))
     print("edge_node_n2: {0}\n".format(edge_node_n2))
-    
     print("length: {0} {1}\n".format(len(edge_angle),len(edge_node_n1)))
-
+    '''
     
     
     # ------------------------------------------------------------------------
@@ -683,15 +743,15 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     
     idx = indices(edge_node_n1, duplicate_node)
     
-    print("duplicate_node: {0}\n".format(duplicate_node))
-    print("duplicate index: {0} \n".format(idx))
+    #print("duplicate_node: {0}\n".format(duplicate_node))
+    #print("duplicate index: {0} \n".format(idx))
     
     #connect node index in edge_node_n1 list
     connect_code_idx = []
     
-    angle_thresh = 20
+    angle_thresh = 10
     
-    dis_thresh = lower_limit
+    dis_thresh = (lower_limit + upper_limit)*0.3
 
     for i in range(len(idx)):
         
@@ -711,8 +771,8 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
             
         angle_diff = np.diff(angle_rec)
         
-        print("angle_rec =  {0}".format(angle_rec))
-        print("angle_diff = {0}".format(angle_diff))
+        #print("angle_rec =  {0}".format(angle_rec))
+        #print("angle_diff = {0}".format(angle_diff))
         
         
         for j in range(len(angle_diff)):
@@ -739,13 +799,14 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     edge_angle_select = [j for i, j in enumerate(edge_angle) if i not in connect_code_idx]
     edge_length_select = [j for i, j in enumerate(edge_length) if i not in connect_code_idx]
     
+    '''
     print("edge_node_n1_select: {0}\n".format(edge_node_n1_select))
     print("edge_node_n2_select: {0}\n".format(edge_node_n2_select))
     print("edge_angle_select: {0}\n".format(edge_angle_select))
     print("edge_length_select: {0}\n".format(edge_length_select))
     
     print("edge_node_n1_select length: {0}\n".format(len(edge_node_n2_select)))
-    
+    '''
     # ------------------------------------------------------------------------
     # Select edges with threshold from distance between edges
     #    
@@ -803,10 +864,10 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     edge_angle_select_final = [j for i, j in enumerate(edge_angle_select) if i not in close_edge_nd]
     edge_length_select_final = [j for i, j in enumerate(edge_length_select) if i not in close_edge_nd]
     
-    
+    '''
     print("edge_node_n1_select_final: {0}\n".format(edge_node_n1_select_final))
     print("edge_node_n2_select final: {0}\n".format(edge_node_n2_select_final))
-    #print("edge_node_n1_select: {0}\n".format(len(edge_node_n1_select)))
+    '''
     
     angle_select = []
     length_select = []
@@ -817,10 +878,19 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
         
         idx = edge_node_n1_select_final[i]
         
+        idx_2 = edge_node_n2_select_final[i]
+        
         if i in duplicate_node:
             pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
+            
+            #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (1, 0.0, 0.0), tube_radius = 0.4)
+            
         else:
             pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
+            
+            #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (0, 0.0, 1.0), tube_radius = 0.4)
+        
+        
         
         '''
         try:
@@ -841,14 +911,16 @@ https://mail.enthought.com/pipermail/enthought-dev/2011-November/030194.html
     #print("angle_select = {0}\n ".format(angle_select))
     #print("length_select = {0}\n ".format(length_select))
     #print("projection_select = {0}\n ".format(projection_select))
+
     
     print('graph rendering finished')
     fig.scene.disable_render = disable_render
     
 
     
-    return tube_surf, pts, edge_node_n1_select_final, edge_node_n2_select_final, edge_angle_select_final, edge_length_select_final, projection_select
+    #return tube_surf, pts, edge_node_n1_select_final, edge_node_n2_select_final, edge_angle_select_final, edge_length_select_final, projection_select
     
+    return edge_node_n1_select_final, edge_node_n2_select_final, edge_angle_select_final, edge_length_select_final, projection_select
     
 
 
