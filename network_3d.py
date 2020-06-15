@@ -455,7 +455,7 @@ def find_anomalies(data):
 
 def plot_graph( G,
                node_size = 1, node_color = (1, 1, 1), scale_node_keyword = None,
-               node_color_keyword = None, tube_radius = .4, edge_color = (1, 1, 1),
+               node_color_keyword = None, tube_radius = 1.4, edge_color = (1, 1, 1),
                edge_color_keyword = None, edge_radius_keyword = None,
                 edge_colormap = 'jet', **kwargs):
                     
@@ -551,9 +551,17 @@ def plot_graph( G,
                 
         #print("edgedict[edge_color_keyword] is {0} \n:".format(edgedict[edge_color_keyword]))
         
-        edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))*np.mean(edgedict[edge_color_keyword])
+        #ori
+        #edgedict_temp = edgedict[edge_color_keyword]
         
+        #color by location
+        #edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))*np.mean(edgedict[edge_color_keyword])
+        
+        #gradient color
         #edgedict_temp = np.arange(len(edgedict[edge_color_keyword]))
+        
+        #same color
+        edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))
         
         #color
         if edge_color_keyword is None:
@@ -621,6 +629,7 @@ def plot_graph( G,
     #pdb.set_trace()
     #pot network
     fig = mlab.gcf()
+    fig = mlab.figure(1, bgcolor = (1,1,1))
     disable_render = fig.scene.disable_render
     fig.scene.disable_render = True
 
@@ -656,7 +665,7 @@ def plot_graph( G,
         
         edges_src.mlab_source.dataset.point_data.get_array(1).name = 'radius'
         
-        tubes = mlab.pipeline.tube(mlab. pipeline.set_active_attribute(edges_src, point_scalars='radius'), tube_radius=tube_radius,)
+        tubes = mlab.pipeline.tube(mlab. pipeline.set_active_attribute(edges_src, point_scalars='radius'), tube_radius = tube_radius,)
         
         #tubes.filter.radius=edge_r
         tubes.filter.vary_radius = 'vary_radius_by_scalar'
@@ -675,7 +684,7 @@ def plot_graph( G,
     if not node_size:
         return tube_surf, None
     
-
+    '''
     # ------------------------------------------------------------------------
     # Plot the nodes
     if node_size is not None:
@@ -715,17 +724,13 @@ def plot_graph( G,
 
             pts = mlab.quiver3d(np.array(xn).ravel(), np.array(yn).ravel(), np.array(zn).ravel(),s,s,s, scalars=np.array(node_color_scalar).ravel(), mode = 'sphere', scale_factor = node_size,resolution=16)
             
-            '''
-            for i in range(len(xn)):
-                
-                mlab.text3d(xn[i], yn[i], zn[i], str(i), scale=(2, 2, 2))
-            '''
-                        
+                              
             pts.glyph.glyph_source.glyph_position = 'center'
             
             pts.glyph.color_mode = 'color_by_scalar'
             
             #pts.glyph.scale_mode = 'scale_by_vector'
+    '''
     
     # ------------------------------------------------------------------------
     # Plot the edge index at the first node location
@@ -881,13 +886,15 @@ def plot_graph( G,
         idx_2 = edge_node_n2_select_final[i]
         
         if i in duplicate_node:
-            pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
+            #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
             
+            print("mlab.text3d")
             #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (1, 0.0, 0.0), tube_radius = 0.4)
             
         else:
-            pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
+            #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
             
+            print("mlab.text3d")
             #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (0, 0.0, 1.0), tube_radius = 0.4)
         
         

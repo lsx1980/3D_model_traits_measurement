@@ -244,6 +244,7 @@ if __name__ == '__main__':
     #sample = imageio.imread(imgList[0])
     
     lazy_arrays = [dask.delayed(load_image) (fn) for fn in imgList]
+    
     lazy_arrays = [da.from_delayed(x, shape = (height, width), dtype = np.float64) for x in lazy_arrays]
     
     image_chunk = da.stack(lazy_arrays)
