@@ -555,13 +555,13 @@ def plot_graph( G,
         #edgedict_temp = edgedict[edge_color_keyword]
         
         #color by location
-        #edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))*np.mean(edgedict[edge_color_keyword])
+        edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))*np.mean(edgedict[edge_color_keyword])
         
         #gradient color
         #edgedict_temp = np.arange(len(edgedict[edge_color_keyword]))
         
         #same color
-        edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))
+        #edgedict_temp = np.ones(len(edgedict[edge_color_keyword]))
         
         #color
         if edge_color_keyword is None:
@@ -684,7 +684,7 @@ def plot_graph( G,
     if not node_size:
         return tube_surf, None
     
-    '''
+    
     # ------------------------------------------------------------------------
     # Plot the nodes
     if node_size is not None:
@@ -730,7 +730,7 @@ def plot_graph( G,
             pts.glyph.color_mode = 'color_by_scalar'
             
             #pts.glyph.scale_mode = 'scale_by_vector'
-    '''
+    
     
     # ------------------------------------------------------------------------
     # Plot the edge index at the first node location
@@ -754,9 +754,9 @@ def plot_graph( G,
     #connect node index in edge_node_n1 list
     connect_code_idx = []
     
-    angle_thresh = 10
+    angle_thresh = 100
     
-    dis_thresh = (lower_limit + upper_limit)*0.3
+    dis_thresh = (lower_limit + upper_limit)*0.8
 
     for i in range(len(idx)):
         
@@ -889,13 +889,13 @@ def plot_graph( G,
             #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
             
             print("mlab.text3d")
-            #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (1, 0.0, 0.0), tube_radius = 0.4)
+            pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (1, 0.0, 0.0), tube_radius = 0.4)
             
         else:
             #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
             
             print("mlab.text3d")
-            #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (0, 0.0, 1.0), tube_radius = 0.4)
+            pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (0, 0.0, 1.0), tube_radius = 0.4)
         
         
         
