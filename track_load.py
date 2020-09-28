@@ -43,6 +43,7 @@ from scipy.spatial import distance
 
 from mayavi import mlab
 
+import imagesize 
 import itertools
 
 #import warnings
@@ -266,7 +267,7 @@ def appendSpherical_np(xyz):
 
 
 # visualize the trace in 2D and apply color coding for each trace
-def visualize_trace_mayavi(trace_array, trace_index, trace_number):
+def trace_compute(trace_array, trace_index, trace_number, width, height, n_slices):
     
     if args["visualize"]:
         
@@ -302,12 +303,9 @@ def visualize_trace_mayavi(trace_array, trace_index, trace_number):
     diameter_rec = []
     projection_radius = []
     
-    image_chunk = np.zeros((413, 411, 30))
-    
-    new_mask = np.zeros_like(image_chunk)
+    image_chunk = np.zeros((width, height, n_slices))
 
-   
-    
+
     for idx, index_value in enumerate(trace_index):
 
         #print(idx, index_value)
@@ -384,7 +382,7 @@ def visualize_trace_mayavi(trace_array, trace_index, trace_number):
     return index_rec, length_rec, angle_rec, diameter_rec, projection_radius, image_chunk
     
     
-
+'''
 #visualize graph using mayavi
 def mayavi_visualize(graph,image_chunk):
     
@@ -413,41 +411,44 @@ def mayavi_visualize(graph,image_chunk):
     
     mlab.show() 
 
-
+'''
 
 
 if __name__ == '__main__':
     
     # construct the argument and parse the arguments
     ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--path", required = True, help = "path to trace file")
+    ap.add_argument("-p", "--path", required = True, help = "Path to slice & trace file")
     ap.add_argument("-v", "--visualize", required = False, default = False, type = bool, help = "Visualize result or not")
-    #ap.add_argument("-dt", "--dis_tracking", required = False, default = '50.5', type = float, help = "dis_tracking")
-    #ap.add_argument("-ma", "--min_angle", required = False, default = '0.1', type = float, help = "min_angle")
-    #ap.add_argument("-dr", "--dist_ratio", required = False, default = '4.8', type = float, help = "dist_ratio")
     args = vars(ap.parse_args())
 
-    #extract file list in specified path
-    filetype = '*.csv' 
+    #extract csv trace result file 
+    trace_filetype = '*.csv' 
     file_path = args["path"]
-    
     #accquire file list
-    file_list = sorted(fnmatch.filter(os.listdir(args["path"]), filetype))
-      
-    #file_list.sort(key=lambda f: int(filter(str.isdigit, f)))
+    trace_file_list = sorted(fnmatch.filter(os.listdir(args["path"]), trace_filetype))
     
-    print(file_list)
+    #print(trace_file_list)  
     
-    global trace_rec, dis_tracking, min_angle, dist_ratio
+    #accquire slice image file list
+    image_filetype = '*.png'
+    image_file_path = file_path + image_filetype
+  
+    imgList = sorted(glob.glob(image_file_path))
     
-    trace_rec = []
-    
-    #define min distance tracking threshold
-    #dis_tracking = args["dis_tracking"]
-    #min_angle = args["min_angle"]
-    #dist_ratio = args["dist_ratio"]
+    #print(imgList)
 
+    #get image size and number
+    n_slices = len(imgList)
     
+    if n_slices > 0 :
+        width, height = imagesize.get(imgList[0])
+        #print(width, height, n_slices)
+    else:
+        print("Empty image folder, abort!")
+        sys.exit(0)
+    
+
     # make the folder to store the results
     parent_path = os.path.abspath(os.path.join(file_path, os.pardir))
     mkpath = parent_path + '/' + str('analysis_result')
@@ -456,7 +457,7 @@ if __name__ == '__main__':
   
     
     #loop to all tracked trace files
-    for file_idx, fname in enumerate(file_list):
+    for file_idx, fname in enumerate(trace_file_list):
 
         df = pd.read_csv(fname)
         
@@ -472,18 +473,16 @@ if __name__ == '__main__':
     trace_array = trace_pd.to_numpy()
     
     # trait computation and visualzition
-    (index_rec, length_rec, angle_rec, diameter_rec, projection_radius, image_chunk) = visualize_trace_mayavi(trace_array, trace_index, trace_number)
+    (index_rec, length_rec, angle_rec, diameter_rec, projection_radius, image_chunk) = trace_compute(trace_array, trace_index, trace_number, width, height, n_slices)
     
-    print(image_chunk.shape)
+    #print(image_chunk.shape)
     
     skel = skeletonize(image_chunk)
     
     skel = skel.astype(np.bool) #data needs to be bool
     
     G = skel2graph(skel) #create graph
-    
-    #print(G.size())
-    
+
     
     #compute edge properities 
     numer_total = G.size()
@@ -538,7 +537,10 @@ if __name__ == '__main__':
     table = tabulate(trait_sum, headers = ['Root trace index', 'Length', 'Angle', 'Diameter', 'Projection radius' ], tablefmt = 'orgtbl')
 
     print(table + "\n")
-    '''
+    
+    
+    
+    
     ##################################################################
     #Start of writing measured parameters as excel file 
 
@@ -601,7 +603,7 @@ if __name__ == '__main__':
     ##################################################################
     #End of writing measured parameters as excel file 
     
-    '''
+    
    
 
 
