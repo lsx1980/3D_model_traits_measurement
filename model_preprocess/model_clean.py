@@ -246,7 +246,9 @@ if __name__ == '__main__':
     
     # visualize the colorspace
     #colorspace_show(extracted_data)
-        
+    
+    
+    
     #define number of cluster, can be optimized based on cost
     n_cluster = args["number_cluster"]
     

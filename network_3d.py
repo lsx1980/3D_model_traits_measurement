@@ -724,7 +724,6 @@ def plot_graph( G,
 
             pts = mlab.quiver3d(np.array(xn).ravel(), np.array(yn).ravel(), np.array(zn).ravel(),s,s,s, scalars=np.array(node_color_scalar).ravel(), mode = 'sphere', scale_factor = node_size,resolution=16)
             
-                              
             pts.glyph.glyph_source.glyph_position = 'center'
             
             pts.glyph.color_mode = 'color_by_scalar'

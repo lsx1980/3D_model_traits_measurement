@@ -142,7 +142,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", required = True, help = "path to *.ply model file")
     ap.add_argument("-m", "--model", required = True, help = "model file name")
-    ap.add_argument("-i", "--interval", required = False, default = '1',  type = int, help= "intervals along sweeping plane")
+    ap.add_argument("-i", "--interval", required = False, default = '1',  type = int, help = "intervals along sweeping plane")
     ap.add_argument("-de", "--direction", required = False, default = 'X',   help = "direction of sweeping plane, X, Y, Z")
     args = vars(ap.parse_args())
     

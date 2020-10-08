@@ -13,7 +13,7 @@ python3 track_load.py -p /home/suxingliu/Ptvpy_test/ -v True
 
 
 argument:
-("-p", "--path", required = True, help="path to trace file")
+("-p", "--path", required = True, help = "path to trace file")
 ("-v", "--visualize", required = False, default = False, type = bool, help = "Visualize result or not")
 
 default file format: *.csv 
