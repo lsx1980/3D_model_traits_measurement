@@ -1,7 +1,7 @@
 """
 Version: 1.5
 
-Summary: Analyze and visualzie tracked traces
+Summary: Analyze and visualize tracked traces
 
 Author: suxing liu
 
@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python3 track_load_ori.py -p /home/suxingliu/Ptvpy_test/ -v True
+python3 track_load_graph.py -p /home/suxingliu/Ptvpy_test/ -f result.csv -v True
 
 
 argument:
@@ -52,7 +52,7 @@ from tabulate import tabulate
 import pandas as pd
 
 
-'''
+
 from skimage.morphology import skeletonize
 import sknw
 import matplotlib.pyplot as plt
@@ -65,7 +65,7 @@ from networkx import nx
 
 import dask
 import dask.array as da
-'''
+
 
 def mkdir(path):
     """Create result folder"""
@@ -98,8 +98,6 @@ def get_cmap(n, name = 'viridis'):
     #RGB color; the keyword argument name must be a standard mpl colormap name
     return plt.cm.get_cmap(name,n+1)
     
-  
-
 # compute the path length along the trace
 def pathlength(x,y,z):
 
@@ -109,7 +107,7 @@ def pathlength(x,y,z):
     
     return sum(lv)
 
-# compute distnace between consective point sets
+# compute distance between consective point sets
 def points_seg_length(coords):
     
     d = np.diff(coords, axis=0)
@@ -151,8 +149,6 @@ def points_angle(x, y, z, line_length):
 
     return r_offest[2], theta_offest[2], phi
 
-
-
 #coordinates transformation from cartesian coords to sphere coord system
 def cart2sph(x, y, z):
     hxy = np.hypot(x, y)
@@ -172,6 +168,7 @@ def appendSpherical_np(xyz):
     ptsnew[:,5] = np.arctan2(xyz[:,1], xyz[:,0])
     return ptsnew[:,3],ptsnew[:,4],ptsnew[:,5]
 
+# remove otliers
 def reject_outliers(data, m = 2.):
     
     d = np.abs(data - np.median(data))
@@ -179,18 +176,20 @@ def reject_outliers(data, m = 2.):
     s = d / (mdev if mdev else 1.)
     return data[s < m]
 
-# visualize the trace in 2D and apply color coding for each trace
+# visualize the traces and return their properities
 def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, index_pair_rec, connect_pts_rec):
     
+    # properities initialization
     index_rec_new = []
     length_rec_new = []
     angle_rec_new = []
     diameter_rec_new = []
     projection_radius_rec_new = []
     index_label_rec_new = []
-
-    
     color_rec = []
+    
+    
+    image_chunk = np.zeros((416, 414, 282))
     
     if args["visualize"]:
     
@@ -356,6 +355,10 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
                 
                 pts = mlab.plot3d(X, Y, Z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean)
             
+            
+            image_chunk[X_combine.astype(int), Y_combine.astype(int), Z_combine.astype(int)] = 1
+            
+            
             # record all parameters
             index_rec_new.append(idx)
             length_rec_new.append(line_length)
@@ -425,12 +428,9 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
         mlab.show()
     
                
-    return index_rec_new, length_rec_new, angle_rec_new, diameter_rec_new, projection_radius_rec_new, index_label_rec_new
-    
+    return index_rec_new, length_rec_new, angle_rec_new, diameter_rec_new, projection_radius_rec_new, index_label_rec_new, image_chunk
     
 
-def func(data, a, b):
-    return data[:,0]*data[:,1]*a + b
 
 # SVD fiting lines to 3D points
 def line_fiting_3D(data):
@@ -714,14 +714,17 @@ if __name__ == '__main__':
     # construct the argument and parse the arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", required = True, help = "Path to slice & trace file")
+    ap.add_argument("-f", "--file", required = True, help = "Trace file")
     ap.add_argument("-v", "--visualize", required = False, default = False, type = bool, help = "Visualize result or not")
     args = vars(ap.parse_args())
 
     #extract csv trace result file 
-    trace_filetype = '*.csv' 
+    #trace_filetype = '*.csv' 
     file_path = args["path"]
     #accquire file list
-    trace_file_list = sorted(fnmatch.filter(os.listdir(args["path"]), trace_filetype))
+    #trace_file_list = sorted(fnmatch.filter(os.listdir(args["path"]), trace_filetype))
+    
+    fname = file_path + args["file"]
     
     #print(trace_file_list)  
     
@@ -749,40 +752,32 @@ if __name__ == '__main__':
         sys.exit(0)
     '''
 
-    # make the folder to store the results
+    # Create the folder to save the results
     parent_path = os.path.abspath(os.path.join(file_path, os.pardir))
     mkpath = parent_path + '/' + str('analysis_result')
     mkdir(mkpath)
     save_path_result = mkpath + '/'
   
     
-    #loop to all tracked trace files
-    for file_idx, fname in enumerate(trace_file_list):
+    #load tracked trace file
+    df = pd.read_csv(fname)
+    trace_pd = df[['particle', 'x', 'y', 'frame', 'size', 'mass', 'raw_mass']]
+    trace_index = trace_pd["particle"].unique()
+    trace_number = len(trace_index)
 
-        df = pd.read_csv(fname)
-        
-        trace_pd = df[['particle', 'x', 'y', 'frame', 'size', 'mass', 'raw_mass']]
-        
-        trace_index = trace_pd["particle"].unique()
-        
-        trace_number = len(trace_index)
-
-    
-        
-    # convert pd fort to nump array
+    # convert pd format to nump array
     trace_array = trace_pd.to_numpy()
     
-    # trait computation and visualzition
-    #(index_rec, length_rec, angle_rec, diameter_rec, projection_radius, image_chunk) = trace_compute(trace_array, trace_index, trace_number, width, height, n_slices)
-    
+    # trait computation 
     (index_rec, length_rec, angle_rec, diameter_rec, projection_radius_rec, fit_linepts_rec, indexes_length_remove) = trace_compute(trace_array, trace_index, trace_number)
     
-
     index_rec_arr = np.asarray(index_rec)
 
     #connect traces with similar angle and location
     (index_pair_rec, connect_pts_rec) = connect_trace(trace_array, index_rec_arr, len(index_rec_arr), fit_linepts_rec)
     
+    '''
+    remove all index of connected and small length traces 
     #######################################################################
     index_pair_rec_arr = np.asarray(index_pair_rec)
     #remove traces based on trace length outliers and connected parts
@@ -804,11 +799,12 @@ if __name__ == '__main__':
     
     index_rec_new = [j for i, j in enumerate(index_rec) if i not in indexes_delete]
     
-    #print(index_rec_new)
+    print(index_rec_new)
     #######################################################################################
-   
+    '''
     
-    (index_rec_new, length_rec_new, angle_rec_new, diameter_rec_new, projection_radius_rec_new, index_label_rec_new) = trace_visualize(trace_array, index_rec_arr, len(index_rec_arr), fit_linepts_rec, index_pair_rec, connect_pts_rec)
+    
+    (index_rec_new, length_rec_new, angle_rec_new, diameter_rec_new, projection_radius_rec_new, index_label_rec_new, image_chunk) = trace_visualize(trace_array, index_rec_arr, len(index_rec_arr), fit_linepts_rec, index_pair_rec, connect_pts_rec)
     
     
     '''
@@ -857,11 +853,11 @@ if __name__ == '__main__':
     #mlab.contour3d(image_chunk.astype(np.float),contours=[.5],opacity=.5,color=(1,1,1))
     
     mlab.show()
+    
+    
     '''
-    
-    
     #output total number of traces detected
-    print("Summary: {0} unique root trajectories were detected...\n".format(len(index_rec)))
+    print("Summary: {0} unique root trajectories were detected...\n".format(len(index_rec_new)))
     
     #output in command window in a sum table
     trait_sum = []

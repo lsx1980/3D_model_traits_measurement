@@ -888,13 +888,13 @@ def plot_graph( G,
             #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2), color=(1, 0.0, 0.0))
             
             print("mlab.text3d")
-            pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (1, 0.0, 0.0), tube_radius = 0.4)
+            #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (1, 0.0, 0.0), tube_radius = 0.4)
             
         else:
             #pts = mlab.text3d(xn[idx], yn[idx], zn[idx], str(i), scale=(2, 2, 2))
             
             print("mlab.text3d")
-            pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (0, 0.0, 1.0), tube_radius = 0.4)
+            #pts = mlab.plot3d([xn[idx], xn[idx_2]], [yn[idx], yn[idx_2]], [zn[idx], zn[idx_2]], color = (0, 0.0, 1.0), tube_radius = 0.4)
         
         
         
