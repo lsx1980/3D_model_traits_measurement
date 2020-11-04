@@ -9,7 +9,7 @@ Author-email: suxingliu@gmail.com
 
 USAGE:
 
-python3 track_load_ori.py -p /home/suxingliu/Ptvpy_test/ -f result.csv -v True
+python3 track_load_ori.py -p /home/suxingliu/Ptvpy_test/ -f trace_result.csv -v True
 
 
 argument:
@@ -24,7 +24,8 @@ default file format: *.csv
 import numpy as np
 from numpy import mean
 from numpy import arctan2, sqrt
-#import numexpr as ne
+from numpy import matrix, average
+
 
 import glob
 import fnmatch
@@ -39,6 +40,7 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
         
 from scipy.spatial import distance
+import scipy.linalg 
 
 from mayavi import mlab
 
@@ -188,6 +190,11 @@ def reject_outliers(data, m = 2.):
     return data[s < m]
 
 
+
+
+
+
+
 # visualize the traces and return their properities
 def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, index_pair_rec, connect_pts_rec):
     
@@ -229,8 +236,8 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
 
         #print(idx, index_value)
         
-        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]
-        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]
+        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]/X_scale
+        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]/Y_scale
         Z = trace_array[np.where(trace_array[:,0] == index_value)][:,3]/Z_scale
         
         radius_mean = np.mean(trace_array[np.where(trace_array[:,0] == index_value)][:,4])
@@ -288,9 +295,9 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
                 z = coords_arr[:,2]
 
 
-                x_pair = trace_array[np.where(trace_array[:,0] == index_pair)][:,1]
-                y_pair = trace_array[np.where(trace_array[:,0] == index_pair)][:,2]
-                z_pair = trace_array[np.where(trace_array[:,0] == index_pair)][:,3]/3
+                x_pair = trace_array[np.where(trace_array[:,0] == index_pair)][:,1]/X_scale
+                y_pair = trace_array[np.where(trace_array[:,0] == index_pair)][:,2]/Y_scale
+                z_pair = trace_array[np.where(trace_array[:,0] == index_pair)][:,3]/Z_scale
 
                 X_combine = np.hstack([X, x, x_pair])
                 Y_combine = np.hstack([Y, y, y_pair])
@@ -315,9 +322,10 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
                 Y_rec.append(y)
                 Z_rec.append(z)
                 radius_mean_rec.append(radius_mean)
-                connect_rec.append('0')
+                connect_rec.append('1')
                 index_rec_vis.append(index_connect_pts_rec)
-
+                
+                '''
                 color_rec.append(color_rgb)
                 X_rec.append(x_pair)
                 Y_rec.append(y_pair)
@@ -325,6 +333,7 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
                 radius_mean_rec.append(radius_mean_pair)
                 connect_rec.append('1')
                 index_rec_vis.append(index_connect_pts_rec)
+                '''
                
             else:
                 X_combine = X
@@ -406,7 +415,7 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
     if args["visualize"]:
     
         print("Visualizing tracked traces...")
-        '''
+        
         fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,400))
         
         for (x, y, z, color_value, radius_mean_value, connect_rec_value, index_rec_vis_value) in zip(X_rec, Y_rec, Z_rec, color_rec, radius_mean_rec, connect_rec, index_rec_vis):
@@ -417,22 +426,24 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
             pts.actor.property.set(point_size = 5.5)
             
             if (int(connect_rec_value) > 0):
-                pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'wireframe', transparent = True, tube_radius = 1*radius_mean_value)
+                pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'wireframe', transparent = True, tube_radius = tube_scale*radius_mean_value)
             else:
-                pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_value)
+                pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*radius_mean_value)
+                #print("connect_rec_value: {0} index {1}".format(connect_rec_value, index_rec_vis_value))
             #pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_value)
             #pts = mlab.plot3d(line_x, line_y, line_z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_value)
             pts = mlab.text3d(x[0], y[0], z[0], str(index_rec_vis_value+1), scale = (4, 4, 4), color = (1, 0.0, 0.0))
         
         mlab.show()
+        
         '''
-        
-        
+        #############################################################################################################
         #animation display
         #fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (1920,1080))
         
-        fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (1280,720))
+        fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,600))
         
+
         # duration of the animation in seconds (it will loop)
         duration = len(index_rec_vis) 
         
@@ -440,22 +451,38 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
             
             idx_t = int(t)
             #mlab.clf() # clear the figure (to reset the colors)
-            pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], mode = 'point')
+            #pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], mode = 'point')
             
-            pts.actor.property.set(point_size = 2.5)
+            #pts.actor.property.set(point_size = 2.5)
+            tube_scale_offset = 1
+            
+            if (idx_t < duration*0.4) and (idx_t > 0):
+                tube_scale_offset = 1.1
+            elif idx_t < duration*0.8:
+                tube_scale_offset = 0.9
+            else:
+                tube_scale_offset = 0.8
+            
             
             if (int(connect_rec[idx_t]) > 0):
-
-                pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'wireframe', transparent = True, tube_radius = 3*radius_mean_rec[idx])
+                
+                pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], mode = 'point')
+                
+                pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'wireframe', transparent = True, tube_radius = tube_scale_offset*tube_scale*radius_mean_rec[idx])
 
             else:
-                pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = 3*radius_mean_rec[idx])
+                
+                pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], mode = 'point')
+            
+                pts.actor.property.set(point_size = 2.5)
+                
+                pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = tube_scale_offset*tube_scale*radius_mean_rec[idx])
 
-                pts = mlab.text3d(X_rec[idx_t][len(X_rec[idx_t])-1], Y_rec[idx_t][len(X_rec[idx_t])-1], Z_rec[idx_t][len(X_rec[idx_t])-1], str(idx_t+1), scale = (20, 20, 20), color = (1, 0.0, 0.0))
+                pts = mlab.text3d(X_rec[idx_t][len(X_rec[idx_t])-1], Y_rec[idx_t][len(X_rec[idx_t])-1], Z_rec[idx_t][len(X_rec[idx_t])-1], str(idx_t+1), scale = (text_size, text_size, text_size), color = (1, 0.0, 0.0))
+
+            mlab.view(camera_azimuth, camera_elevation, camera_distance, camera_focalpoint)
             
-            mlab.view(45, 55, 2553, np.array([417, 438, -193]))
-            
-            #print(mlab.view())
+            print(mlab.view())
             
             f = mlab.gcf()
             f.scene._lift()
@@ -463,12 +490,14 @@ def trace_visualize(trace_array, array_index_rec, n_trace, fit_linepts_rec, inde
             return mlab.screenshot(antialiased = True)
         
         animation = mpy.VideoClip(make_frame, duration = duration)
+
+        animation.write_gif((save_path_result + 'structure.gif'), fps = 5)
         
-        animation.write_gif("test.gif", fps = 5)
+        #animation.write_videofile((save_path_result + 'structure.mp4'), fps = 5)
         
         #show model
         mlab.show()
-        
+        '''
 
         ####################################################################Pipeline Visualiztion
         '''
@@ -569,8 +598,8 @@ def trace_visualize_simple(trace_array, array_index_rec, n_trace, fit_linepts_re
         #t = idx
         #print(idx, index_value)
         
-        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]
-        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]
+        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]/X_scale
+        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]/Y_scale
         Z = trace_array[np.where(trace_array[:,0] == index_value)][:,3]/Z_scale
         
         radius_mean = np.mean(trace_array[np.where(trace_array[:,0] == index_value)][:,4])
@@ -654,7 +683,7 @@ def trace_visualize_simple(trace_array, array_index_rec, n_trace, fit_linepts_re
 
         print("Visualizing tracked traces...")
 
-        '''
+        
         fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,400))
         
         for (x, y, z, color_value, idx_value, radius_mean_value) in zip(X_rec, Y_rec, Z_rec, color_rec, index_rec_new, radius_mean_rec):
@@ -664,39 +693,48 @@ def trace_visualize_simple(trace_array, array_index_rec, n_trace, fit_linepts_re
             pts = mlab.points3d(x, y, z, color = color_value, mode = 'point')
             pts.actor.property.set(point_size = 5.5)
 
-            pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_value)
+            pts = mlab.plot3d(x, y, z, color = color_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*radius_mean_value)
             #pts = mlab.plot3d(line_x, line_y, line_z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_value)
             pts = mlab.text3d(x[0], y[0], z[0], str(idx_value), scale = (4, 4, 4), color = (1, 0.0, 0.0))
         
         mlab.show()
-    
+        
+        #########################################################################################
         '''
         #animation display
         #fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (1920,1080))
         
         fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (1280,720))
         
+        mlab.orientation_axes(True)
         # duration of the animation in seconds (it will loop)
         duration = len(array_index_rec) 
         
         def make_frame(t):
             
             idx_t = int(t)
+            
+            if (idx_t < duration*0.4) and (idx_t > 0):
+                tube_scale_offset = 1
+            elif idx_t < duration*0.8:
+                tube_scale_offset = 0.6
+            else:
+                tube_scale_offset = 0.4
+            
             #mlab.clf() # clear the figure (to reset the colors)
             pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], mode = 'point')
             
             pts.actor.property.set(point_size = 2.5)
 
-            pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = 3*radius_mean_rec[idx])
+            pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = tube_scale_offset*tube_scale*radius_mean_rec[idx])
 
             #pts = mlab.plot3d(line_x, line_y, line_z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_rec[idx])
 
-            pts = mlab.text3d(X_rec[idx_t][len(X_rec[idx_t])-1], Y_rec[idx_t][len(X_rec[idx_t])-1], Z_rec[idx_t][len(X_rec[idx_t])-1], str(idx_t+1), scale = (10, 10, 10), color = (1, 0.0, 0.0))
+            pts = mlab.text3d(X_rec[idx_t][len(X_rec[idx_t])-1], Y_rec[idx_t][len(X_rec[idx_t])-1], Z_rec[idx_t][len(X_rec[idx_t])-1], str(idx_t+1), scale = (text_size, text_size, text_size), color = (1, 0.0, 0.0))
             
-                        
-            mlab.view(45, 54, 1051, np.array([226, 178, -125]))
+            mlab.view(camera_azimuth, camera_elevation, camera_distance, camera_focalpoint)
             
-            #print(mlab.view())
+            print(mlab.view())
             
             f = mlab.gcf()
             f.scene._lift()
@@ -705,14 +743,14 @@ def trace_visualize_simple(trace_array, array_index_rec, n_trace, fit_linepts_re
         
         animation = mpy.VideoClip(make_frame, duration = duration)
         
-        animation.write_gif("test.gif", fps = 5)
+        animation.write_gif((save_path_result + 'structure.gif'), fps = 5)
+        
+        #animation.write_videofile((save_path_result + 'structure.mp4'), fps = 5)
         
         #show model
         mlab.show()
-        
-    
-        
-        
+        '''
+
     return index_rec_new, length_rec_new, angle_rec_new, diameter_rec_new, projection_radius_rec_new, index_label_rec_new, color_rec, image_chunk
 
 
@@ -762,8 +800,8 @@ def trace_compute(trace_array, trace_index, trace_number):
 
         #print(idx, index_value)
         
-        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]
-        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]
+        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]/X_scale
+        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]/Y_scale
         Z = trace_array[np.where(trace_array[:,0] == index_value)][:,3]/Z_scale
 
         #traits measurement
@@ -878,7 +916,140 @@ def interpolate_pts_3D(data, data_range, z_range):
     return linepts
 
 
-def connect_trace(trace_array, array_index_rec, n_trace, fit_linepts_rec):
+
+def solveEquations(P,L,U,y):
+    y1=np.dot(P,y)
+    y2=y1
+    m=0
+    for m in range(0, len(y)):
+        for n in range(0, m):
+            y2[m] = y2[m] - y2[n] * L[m][n]
+        y2[m] = y2[m] / L[m][m]
+    y3 = y2
+    for m in range(len(y) - 1,-1,-1):
+        for n in range(len(y) - 1, m, -1):
+            y3[m] = y3[m] - y3[n] * U[m][n]
+        y3[m] = y3[m] / U[m][m]
+    return y3
+
+'''
+    Scipy tool with high complexity.
+    P stands for the permutation Matrix
+    L stands for the lower-triangle Matrix
+    U stands for the upper-triangle Matrix
+    matrix·x = y
+    P·matrix = L·U
+    P·matrix·x = L·U·x = P·y
+    L·U·x = y1
+    U·x = y2
+    x = y3
+'''  
+def doLUFactorization(matrix):    
+    P, L, U=scipy.linalg.lu(matrix)
+    return P, L, U   
+       
+
+def cubicSplineInterpolate(x_axis,y_axis,z_axis):
+    '''
+        prepare right-side vector
+    '''
+    dx=[]
+    dy=[]
+    dz=[]
+    matrix=[]
+    n=2
+    while n<len(x_axis):
+        dx.append(3*(x_axis[n]-2*x_axis[n-1]+x_axis[n-2]))
+        dy.append(3*(y_axis[n]-2*y_axis[n-1]+y_axis[n-2]))
+        dz.append(3*(z_axis[n]-2*z_axis[n-1]+z_axis[n-2]))
+        n=n+1   
+    '''
+        produce square matrix looks like :
+        [[2.0, 0.5, 0.0, 0.0], [0.5, 2.0, 0.5, 0.0], [0.0, 0.5, 2.0, 0.5], [0.0, 0.0, 2.0, 0.5]]
+        the classes of the matrix depends on the length of x_axis(number of nodes)
+    '''
+    matrix.append([float(2), float(0.5)])
+    for m in range(len(x_axis)-4):
+        matrix[0].append(float(0))                
+    n=2
+    while n<len(x_axis)-2:
+        matrix.append([])
+        for m in range(n-2):
+            matrix[n-1].append(float(0)) 
+              
+        matrix[n-1].append(float(0.5))
+        matrix[n-1].append(float(2))
+        matrix[n-1].append(float(0.5))
+        
+        for m in range(len(x_axis)-n-3):
+            matrix[n-1].append(float(0)) 
+        n=n+1
+        
+    matrix.append([])
+    for m in range(n-2):
+        matrix[n-1].append(float(0))    
+    matrix[n-1].append(float(0.5))    
+    matrix[n-1].append(float(2))
+    '''
+        LU Factorization may not be optimal method to solve this regular matrix. 
+        If you guys have better idea to solve the Equation, please contact me.
+        As the LU Factorization algorithm cost 2*n^3/3 + O(n^2) (e.g. Doolittle algorithm, Crout algorithm, etc).
+        (How about Rx = Q'y using matrix = QR (Schmidt orthogonalization)?)
+        If your application field requires interpolating into constant number nodes, 
+        It is highly recommended to cache the P,L,U and reuse them to get O(n^2) complexity.
+    '''
+    P, L, U = doLUFactorization(matrix)
+    u=solveEquations(P,L,U,dx)
+    v=solveEquations(P,L,U,dy)
+    w=solveEquations(P,L,U,dz)
+    
+    '''
+        define gradient of start/end point
+    '''
+    m=0
+    U=[0]
+    V=[0]
+    W=[0]
+    while m<len(u):
+        U.append(u[m])
+        V.append(v[m])
+        W.append(w[m])
+        m=m+1
+    U.append(0)
+    V.append(0)
+    W.append(0)
+   
+    return U,V,W
+    
+
+'''
+    calculate each parameters of location.
+'''
+def func(x1,x2,t,v1,v2,t1,t2):
+    ft=((t2-t)**3*v1+(t-t1)**3*v2)/6+(t-t1)*(x2-v2/6)+(t2-t)*(x1-v1/6)
+    return ft
+
+
+def pts_interpolation(U,V,W,x_axis,y_axis,z_axis):
+    
+    n_iteration = 10
+    
+    m = 1
+    xLinespace=[]
+    yLinespace=[]
+    zLinespace=[]
+    while m<len(x_axis):
+        for t in np.arange(m-1,m,1/float(n_iteration)):
+            xLinespace.append(func(x_axis[m-1],x_axis[m],t,U[m-1],U[m],m-1,m))
+            yLinespace.append(func(y_axis[m-1],y_axis[m],t,V[m-1],V[m],m-1,m))
+            zLinespace.append(func(z_axis[m-1],z_axis[m],t,W[m-1],W[m],m-1,m))
+        m=m+1
+    
+    return xLinespace, yLinespace, zLinespace
+
+
+
+def trace_connect(trace_array, array_index_rec, n_trace, fit_linepts_rec):
     
     #import similaritymeasures
     #from scipy.spatial import distance
@@ -892,8 +1063,8 @@ def connect_trace(trace_array, array_index_rec, n_trace, fit_linepts_rec):
 
         #print(idx, index_value)
         
-        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]
-        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]
+        X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]/X_scale
+        Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]/Y_scale
         Z = trace_array[np.where(trace_array[:,0] == index_value)][:,3]/Z_scale
         
         #stack array
@@ -926,9 +1097,10 @@ def connect_trace(trace_array, array_index_rec, n_trace, fit_linepts_rec):
             if (idx != idx_next): 
                 
                 #extract coordinates of the next trace
-                X_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,1]
-                Y_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,2]
-                Z_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,3]/3
+                X_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,1]/X_scale
+                Y_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,2]/Y_scale
+                Z_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,3]/Z_scale
+                
                 
                 #stack array
                 coords_next = np.stack(( X_next, Y_next, Z_next ), axis = 1)
@@ -948,7 +1120,7 @@ def connect_trace(trace_array, array_index_rec, n_trace, fit_linepts_rec):
                 #angle between current trace and new trace to be connected
                 angle_diff_vector_2connect = angle_between(vector_line, np.subtract(coords[len(coords)-1], coords_next[0]))
 
-                connect_vector = np.vstack((coords[len(coords)-1],coords_next[0]))
+                #connect_vector = np.vstack((coords[len(coords)-1],coords_next[0]))
                 #print("coordinate current {0}".format(coords[len(coords)-1]))
                 #print("coords_next {0}:".format(coords_next[0]))
                 #print(connect_vector)
@@ -956,26 +1128,36 @@ def connect_trace(trace_array, array_index_rec, n_trace, fit_linepts_rec):
                
 
                 #compute the data range to be connected
-                x_diff = np.diff(connect_vector[:,0])
-                y_diff = np.diff(connect_vector[:,1])
-                z_diff = np.diff(connect_vector[:,2])
+                #x_diff = np.diff(connect_vector[:,0])
+                #y_diff = np.diff(connect_vector[:,1])
+                #z_diff = np.diff(connect_vector[:,2])
                 
-                data_range = max(abs(x_diff), abs(y_diff), abs(z_diff))
+                #data_range = max(abs(x_diff), abs(y_diff), abs(z_diff))
                 
                 #print(max_connect_pts[:,2])
                 #print(min_connect_pts[:,2])
                 
-                squared_dist = np.sum((coords[len(coords)-1]-coords_next[0])**2, axis=0)
-                dist = np.sqrt(squared_dist)
+                #squared_dist = np.sum((coords[len(coords)-1]-coords_next[0])**2, axis=0)
+                #dist = np.sqrt(squared_dist)
                 
                 #z_range = abs(max_connect_pts[:,2] - min_connect_pts[:,2])
                 
                 #compute number of points to be connected
-                z_range = dist
+                #z_range = dist
+                
                 
                 # quantify the difference between the two curves using PCM
                 #pcm_diff = similaritymeasures.pcm(coords, coords_next)
                 #dst_diff = distance.euclidean(coords[len(coords)-1], coords_next[0])
+                
+                X_combine = np.hstack([X, X_next])
+                Y_combine = np.hstack([Y, Y_next])
+                Z_combine = np.hstack([Z, Z_next])
+                
+                #print("X size {0} X combine size {1}\n".format(len(X), len(X_combine)))
+                #print("Y size {0} Y combine size {1}:".format(len(Y), len(Y_combine)))
+                #print("Z size {0} Z combine size {1}\n:".format(len(Z), len(Z_combine)))
+                
                 
                 #if (angle_diff_vector < 20) and (pcm_diff < 105) and (dst_diff < 100):
                 if (angle_diff_vector < angle_connect_thresh) and (angle_diff_vector_2connect < angle_connect_thresh) :
@@ -984,12 +1166,26 @@ def connect_trace(trace_array, array_index_rec, n_trace, fit_linepts_rec):
                     index_pair_rec.append(index_pair)
                     
                     #interpolate the points to connect two traces
-                    connect_pts = interpolate_pts_3D(connect_vector, data_range*0.8, int(z_range*0.8))
-                    connect_pts_rec.append(connect_pts)
-                   
+                    #connect_pts = interpolate_pts_3D(connect_vector, data_range*interpolation_range_factor, int(z_range*interpolation_range_factor))
+                    #connect_pts_rec.append(connect_pts)
+                    
+                    #print("connect_pts type {0} \n:".format(type(connect_pts)))
+                    #print("connect_pts size {0} \n:".format(str(connect_pts.shape)))
+                    
+                    (U, V, W) = cubicSplineInterpolate(X_combine, Y_combine, Z_combine)
+
+                    (xLinespace, yLinespace, zLinespace) = pts_interpolation(U, V, W, X_combine, Y_combine, Z_combine)
+                    
+                    coords_connect_pts = np.stack(( xLinespace, yLinespace, zLinespace ), axis = 1)
+                    
+                    #print("X size {0}, X combine size {1}, xLinespace size {2}, coords_connect_pts size {3}\n".format(len(X), len(X_combine), len(xLinespace), coords_connect_pts.shape))
+                    
+                    connect_pts_rec.append(coords_connect_pts)
+                    
+                  
                     #print(connect_vector)
                     #print(connect_pts)
-                    print("Trace index {0} are connected by {1} points in 3D space...".format(index_pair, int(z_range)))
+                    print("Trace index {0} are connected by {1} points in 3D space...".format(index_pair, len(xLinespace)))
                     print("Angle difference between lines: {0}, Angle difference between connected lines: {1}.\n".format(angle_diff_vector, angle_diff_vector_2connect))
                     
                 
@@ -1020,13 +1216,28 @@ if __name__ == '__main__':
     
     #print(trace_file_list)  
     
-    global angle_connect_thresh, Z_scale, length_thresh
+    global angle_connect_thresh, X_scale, Y_scale, Z_scale, text_size, length_thresh, save_path_result, camera_azimuth, camera_elevation, camera_distance, camera_focalpoint, tube_scale, interpolation_range_factor
     
-    length_thresh = 0.8
+    length_thresh = 1.3
     
     angle_connect_thresh = 20
     
-    Z_scale = -3.2
+    X_scale = 2.0
+    Y_scale = 2.0
+    Z_scale = -2.5
+    
+    text_size = 7
+    
+    tube_scale = 1.0
+    
+    interpolation_range_factor = 0.55
+    
+    camera_azimuth = 45.0
+    camera_elevation = 54.0
+    camera_distance = 1305.0
+    camera_focalpoint = np.array([198.0, 197.0, -251.0]) 
+    
+    #(45.00000000000001, 54.735610317245374, 1006.2074549601899, array([ 141.55235848,  145.97344221, -181.19638998]))
     
     '''
     #accquire slice image file list
@@ -1050,7 +1261,8 @@ if __name__ == '__main__':
 
     # Create the folder to save the results
     parent_path = os.path.abspath(os.path.join(file_path, os.pardir))
-    mkpath = parent_path + '/' + str('analysis_result')
+    #mkpath = parent_path + '/' + str('analysis_result')
+    mkpath = file_path + str('analysis_result')
     mkdir(mkpath)
     save_path_result = mkpath + '/'
   
@@ -1083,7 +1295,7 @@ if __name__ == '__main__':
     index_rec_arr = np.asarray(index_label_rec)
     
     #connect traces with similar angle and location
-    (index_pair_rec, connect_pts_rec) = connect_trace(trace_array, index_rec_arr, len(index_rec_arr), fit_linepts_rec)
+    (index_pair_rec, connect_pts_rec) = trace_connect(trace_array, index_rec_arr, len(index_rec_arr), fit_linepts_rec)
     
     #print("index_pair_rec {}".format(index_pair_rec))
     
@@ -1180,6 +1392,7 @@ if __name__ == '__main__':
     trait_sum = []
     
     for row in zip(range(len(index_rec_new)), length_rec_new, angle_rec_new, diameter_rec_new, projection_radius_rec_new, index_label_rec_new):
+       
        trait_sum.append(row)
 
     table = tabulate(trait_sum, headers = ['Root trace index', 'Length', 'Angle', 'Diameter', 'Projection radius' ,'Index_group'], tablefmt = 'orgtbl')

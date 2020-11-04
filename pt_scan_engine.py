@@ -87,7 +87,7 @@ def format_converter(current_path, model_name):
     '''
     
     #Normalize data
-    min_max_scaler = preprocessing.MinMaxScaler(feature_range = (0,1000))
+    min_max_scaler = preprocessing.MinMaxScaler(feature_range = (0,1000000))
 
     point_normalized = min_max_scaler.fit_transform(Data_array)
     

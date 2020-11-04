@@ -17,6 +17,7 @@ from numpy import random
 import progressbar
 from time import sleep
 
+
 def get_nhood(img):
     """
     calculates the neighborhood of all voxel, needed to create graph out of skel image
@@ -457,7 +458,7 @@ def plot_graph( G,
                node_size = 1, node_color = (1, 1, 1), scale_node_keyword = None,
                node_color_keyword = None, tube_radius = 1.4, edge_color = (1, 1, 1),
                edge_color_keyword = None, edge_radius_keyword = None,
-                edge_colormap = 'jet', **kwargs):
+                edge_colormap = 'BrBG', **kwargs):
                     
     """ 3D plot of a 3D  network, this function uses a list of coordinates to visualize a network which might represent a 3D skeleton
  For both, edges and nodes the size and the color can be used to visualize a parameter of the attribute dictionary, 
