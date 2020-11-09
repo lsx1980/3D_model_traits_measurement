@@ -126,6 +126,7 @@ def points_seg_length(coords):
     
     return sum(segdists)
 
+#compute distance between two point sets in a line
 def line_length_2pt(coords):
     
     start = coords[0]
@@ -202,11 +203,6 @@ def reject_outliers(data, m = 2.):
     return data[s < m]
 
 
-
-
-
-
-
 # visualize the traces and return their properities
 def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_rec, connect_pts_rec):
     
@@ -224,6 +220,8 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
     angle_rec = []
     diameter_rec = []
     projection_radius_rec = []
+    
+    color_rec = []
     
     #image_chunk = np.zeros((416, 414, 282))
     
@@ -244,8 +242,11 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
     
     #print("len(array_index_rec) {}, len(index_pair_rec_arr) {}, len(connect_pts_rec) {}\n".format(len(array_index_rec),len(index_pair_rec_arr),len(connect_pts_rec)))
     
+    cmap = get_cmap(len(array_index_rec))
     
     for idx, index_value in enumerate(array_index_rec):
+        
+        color_rgb = cmap(idx)[:len(cmap(idx))-1]
         
         if index_value in index_pair_rec_unique:
         #if(len(list(filter (lambda x : x == index_value, index_pair_rec_unique))) > 0):
@@ -284,7 +285,7 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
                 angle_rec.append(azimuth)
                 diameter_rec.append(radius_mean)
                 projection_radius_rec.append(r)
-                
+                color_rec.append(color_rgb)
                 
         else:
             #print("current idx {0}: index value {1}".format(idx, index_value))
@@ -316,43 +317,55 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
             angle_rec.append(azimuth)
             diameter_rec.append(radius_mean)
             projection_radius_rec.append(r)
-            
+            color_rec.append(color_rgb)
     
     #import random
     #color = list(random.sample(range(0, 1), len(array_index_rec)))
     
     if args["visualize"]:
     
-        print("Visualizing tracked traces...")
+        print("Visualizing tracked traces...\n")
         
         ###########################################################################################################3
         
-        cmap = get_cmap(len(X_rec))
+        #cmap = get_cmap(len(X_rec))
         
-        fig_trace = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,400))
+        fig_trace = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (720,1080))
         
-        for idx, (x, y, z, diameter_rec_value, connect_label_rec_value, index_label_rec_value) in enumerate(zip(X_rec, Y_rec, Z_rec, diameter_rec, connect_label_rec, index_label_rec)):
+        for idx, (x, y, z, diameter_rec_value, connect_label_rec_value, index_label_rec_value, color_rec_value) in enumerate(zip(X_rec, Y_rec, Z_rec, diameter_rec, connect_label_rec, index_label_rec, color_rec)):
             
-            color_rgb = cmap(idx)[:len(cmap(idx))-1]
+            #color_rgb = cmap(idx)[:len(cmap(idx))-1]
             
             #pts = mlab.points3d(x, y, z, color = color_rgb, mode = 'point')
-            #pts.actor.property.set(point_size = 8.5)
+            #pts.actor.property.set(point_size = 5.5)
             
             if (int(connect_label_rec_value) > 0):
                 
-                #pts = mlab.plot3d(x, y, z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec_value)
-                pts = mlab.points3d(x, y, z, color = color_rgb, mode = 'point')
-                pts.actor.property.set(point_size = 8.5)
+                pts = mlab.plot3d(x, y, z, color = color_rec_value, opacity = 0.3, representation = 'wireframe', transparent = True, tube_radius = tube_scale*diameter_rec_value)
+                
+                #pts = mlab.points3d(x, y, z, color = color_rec_value, mode = 'point')
+                #pts.actor.property.set(point_size = 5.5)
+                
             else:
                 
-                pts = mlab.plot3d(x, y, z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec_value)
+                pts = mlab.plot3d(x, y, z, color = color_rec_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec_value)
 
-            pts = mlab.text3d(x[0], y[0], z[0], str(index_label_rec_value), scale = (4, 4, 4), color = (1, 0.0, 0.0))
+            #pts = mlab.text3d(x[0], y[0], z[0], str(index_label_rec_value), scale = (4, 4, 4), color = (1, 0.0, 0.0))
         
+        
+        
+        snapshot = (save_path_result + directory_name + '.png')
+        
+        mlab.savefig(snapshot, sizesize = (720,1080))
+        
+        #obj_file = (save_path_result + 'model.obj')
+        
+        #mlab.savefig(obj_file)
+       
         mlab.show()
         
         ############################################################################################################
-    
+        
         '''
         #############################################################################################################
         #animation display
@@ -360,10 +373,8 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
         
         fig_trace_animation = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,600))
         
-        cmap = get_cmap(len(X_rec))
-        
         # duration of the animation in seconds (it will loop)
-        duration = len(index_rec) 
+        duration = len(X_rec)  
         
         def make_frame(t):
             
@@ -374,35 +385,19 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
             #pts.actor.property.set(point_size = 2.5)
 
             #mlab.clf() # clear the figure (to reset the colors)
-            pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = cmap(idx_t)[:len(cmap(idx_t))-1], mode = 'point')
+            #pts = mlab.points3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], mode = 'point')
             
-            pts.actor.property.set(point_size = 2.5)
+            #pts.actor.property.set(point_size = 2.5)
 
-            pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = cmap(idx_t)[:len(cmap(idx_t))-1], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec[idx_t])
+            pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = color_rec[idx_t], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec[idx_t])
 
             #pts = mlab.plot3d(line_x, line_y, line_z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = 1*radius_mean_rec[idx])
 
             pts = mlab.text3d(X_rec[idx_t][len(X_rec[idx_t])-1], Y_rec[idx_t][len(X_rec[idx_t])-1], Z_rec[idx_t][len(X_rec[idx_t])-1], str(idx_t+1), scale = (text_size, text_size, text_size), color = (1, 0.0, 0.0))
             
-            mlab.view(camera_azimuth, camera_elevation, camera_distance, camera_focalpoint)
-            
-            #print(mlab.view())
-            
-            ##############################################################
-            #if (int(connect_label_rec[idx_t]) > 0):
-                
-                #pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = cmap(idx_t)[:len(cmap(idx_t))-1], opacity = 0.1, representation = 'wireframe', transparent = True, tube_radius = tube_scale*diameter_rec[idx_t])
-
-            #else:
-                
-                #pts = mlab.plot3d(X_rec[idx_t], Y_rec[idx_t], Z_rec[idx_t], color = cmap(idx_t)[:len(cmap(idx_t))-1], opacity = 0.1, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec[idx_t])
-
-                #pts = mlab.text3d(X_rec[idx_t][len(X_rec[idx_t])-1], Y_rec[idx_t][len(X_rec[idx_t])-1], Z_rec[idx_t][len(X_rec[idx_t])-1], str(idx_t+1), scale = (text_size, text_size, text_size), color = (1, 0.0, 0.0))
-
             #mlab.view(camera_azimuth, camera_elevation, camera_distance, camera_focalpoint)
-            ##############################################################
             
-            #print(mlab.view())
+            print(mlab.view())
             
             f = mlab.gcf()
             f.scene._lift()
@@ -411,7 +406,7 @@ def trace_visualize(trace_array, array_index_rec, fit_linepts_rec, index_pair_re
         
         animation = mpy.VideoClip(make_frame, duration = duration)
 
-        animation.write_gif((save_path_result + 'structure.gif'), fps = 5)
+        animation.write_gif((save_path_result + directory_name + '.gif'), fps = 5)
         
         #animation.write_videofile((save_path_result + 'structure.mp4'), fps = 5)
         
@@ -498,8 +493,10 @@ def trace_visualize_simple(trace_array, array_index_rec, fit_linepts_rec, index_
     X_rec = []
     Y_rec = []
     Z_rec = []
-
     
+    color_rec = []
+
+    cmap = get_cmap(len(array_index_rec))
     #color = np.arange(0, 1, 1/n_trace).tolist()
     
     # collect all the tracked traces and their properties
@@ -507,6 +504,8 @@ def trace_visualize_simple(trace_array, array_index_rec, fit_linepts_rec, index_
 
         #t = idx
         #print(idx, index_value)
+        
+        color_rgb = cmap(idx)[:len(cmap(idx))-1]
         
         X = trace_array[np.where(trace_array[:,0] == index_value)][:,1]/X_scale
         Y = trace_array[np.where(trace_array[:,0] == index_value)][:,2]/Y_scale
@@ -552,6 +551,7 @@ def trace_visualize_simple(trace_array, array_index_rec, fit_linepts_rec, index_
         angle_rec.append(azimuth)
         diameter_rec.append(radius_mean)
         projection_radius_rec.append(r)
+        color_rec.append(color_rgb)
         
         #index_rec, length_rec, angle_rec, diameter_rec, projection_radius_rec, color_rec, index_label_rec, X_rec, Y_rec, Z_rec
         
@@ -560,18 +560,18 @@ def trace_visualize_simple(trace_array, array_index_rec, fit_linepts_rec, index_
     
         print("Visualizing tracked traces...")
         
-        cmap = get_cmap(len(X_rec))
+        #cmap = get_cmap(len(X_rec))
         
         fig_myv = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,400))
         
-        for idx, (x, y, z, diameter_rec_value, index_label_rec_value) in enumerate(zip(X_rec, Y_rec, Z_rec, diameter_rec, index_label_rec)):
+        for idx, (x, y, z, diameter_rec_value, index_label_rec_value, color_rec_value) in enumerate(zip(X_rec, Y_rec, Z_rec, diameter_rec, index_label_rec, color_rec)):
             
-            color_rgb = cmap(idx)[:len(cmap(idx))-1]
+            #color_rgb = cmap(idx)[:len(cmap(idx))-1]
             
-            pts = mlab.points3d(x, y, z, color = color_rgb, mode = 'point')
+            pts = mlab.points3d(x, y, z, color = color_rec_value, mode = 'point')
             pts.actor.property.set(point_size = 5.5)
             
-            pts = mlab.plot3d(x, y, z, color = color_rgb, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec_value)
+            pts = mlab.plot3d(x, y, z, color = color_rec_value, opacity = 0.3, representation = 'surface', transparent = True, tube_radius = tube_scale*diameter_rec_value)
             pts = mlab.text3d(x[0], y[0], z[0], str(index_label_rec_value), scale = (4, 4, 4), color = (1, 0.0, 0.0))
         
         mlab.show()
@@ -687,11 +687,18 @@ def trace_compute(trace_array, trace_index):
     Z_rec = []
     
     
+    p = np.array([0, 0, 0])
+    q = np.array([0, 0, 1])
+    r = np.array([0, 1, 1])
+
+
+    
     #progress bar display
     bar = progressbar.ProgressBar(maxval = len(trace_index))
     
     bar.start()
 
+    #scan all traces
     for idx, index_value in enumerate(trace_index):
 
         #print(idx, index_value)
@@ -735,7 +742,6 @@ def trace_compute(trace_array, trace_index):
         yLinespace = np.array((fit_linepts[0][1], fit_linepts[1][1]))
         zLinespace = np.array((fit_linepts[0][2], fit_linepts[1][2]))
         
-        
         #print(fit_linepts[0], fit_linepts[1])
         
         #line_length = pathlength(X, Y, Z)
@@ -748,9 +754,9 @@ def trace_compute(trace_array, trace_index):
         
         #print("line_length {0} properities:".format(line_length))
         #print("line_length_2pt {0} properities:".format(line_length_euclidean))
-        '''
-        (r, azimuth, elevation) = cart2sph(X, Y, Z)
         
+        (r, azimuth, elevation) = cart2sph(X, Y, Z)
+        '''
         if azimuth > 90:
             angle = 180 - azimuth
         elif azimuth < 0:
@@ -768,7 +774,7 @@ def trace_compute(trace_array, trace_index):
         index_rec.append(idx)
         
         length_euclidean_rec.append(line_length_euclidean)
-        #angle_rec.append(angle)
+        angle_rec.append(azimuth)
         #diameter_rec.append(radius_mean)
         #projection_radius_rec.append(r)
         
@@ -794,10 +800,14 @@ def trace_compute(trace_array, trace_index):
     
     indexes_length_remove = [idx for idx, element in enumerate(length_euclidean_rec) if element < (avg_length*length_thresh)]
     
+    #indexes_angle_remove = [idx for idx, element in enumerate(angle_rec) if element > 70]
+    
     #indexes_length_remove_label = [index_label_rec[i] for i in indexes_length_remove] 
     
     #print("avg_length is {0}".format(avg_length))
     #print("indexes_length_remove is {0}".format(indexes_length_remove))
+    
+    #print("indexes_angle_remove is {0}".format(indexes_angle_remove))
     
     '''
     fig_ori = mlab.figure(bgcolor = (1,1,1), fgcolor = (0.5, 0.5, 0.5), size = (600,400))
@@ -823,7 +833,7 @@ def trace_compute(trace_array, trace_index):
 
     #return index_rec, length_euclidean_rec, angle_rec, diameter_rec, projection_radius_rec, index_label_rec, fit_linepts_rec, indexes_length_remove 
 
-    return index_rec, index_label_rec, fit_linepts_rec, indexes_length_remove 
+    return index_rec, index_label_rec, fit_linepts_rec, indexes_length_remove, length_euclidean_rec
 
 
 
@@ -893,7 +903,7 @@ def solveEquations(P,L,U,y):
     x = y3
 '''  
 def doLUFactorization(matrix):    
-    P, L, U=scipy.linalg.lu(matrix)
+    P, L, U = scipy.linalg.lu(matrix)
     return P, L, U   
 
 #calculate each parameters of location.
@@ -1011,6 +1021,16 @@ def pts_interpolation(U,V,W,x_axis,y_axis,z_axis):
 '''
 
 
+def dist_pt2line(p, q, r):
+    
+    x = p-q
+    
+    t = np.dot(r-q, x)/np.dot(x, x)
+    
+    return np.linalg.norm(t*(p-q)+q-r)
+
+
+
 def trace_connect(trace_array, array_index_rec, fit_linepts_rec):
     
     #import similaritymeasures
@@ -1069,7 +1089,6 @@ def trace_connect(trace_array, array_index_rec, fit_linepts_rec):
                 Y_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,2]/Y_scale
                 Z_next = trace_array[np.where(trace_array[:,0] == index_value_next)][:,3]/Z_scale
                 
-                
                 #stack array
                 coords_next = np.stack(( X_next, Y_next, Z_next ), axis = 1)
                 
@@ -1118,7 +1137,38 @@ def trace_connect(trace_array, array_index_rec, fit_linepts_rec):
                 
                 # quantify the difference between the two curves using PCM
                 #pcm_diff = similaritymeasures.pcm(coords, coords_next)
-                #dst_diff = distance.euclidean(coords[len(coords)-1], coords_next[0])
+                
+                #distance between connection points
+                dst_connection_pts = distance.euclidean(coords[len(coords)-1], coords_next[0])
+                
+                #distance between connection points
+                #dst_pts_line = distance.euclidean(coords[len(coords)-1], coords_next[0])
+                
+                #p = arr_lines[0,:]
+                #q = arr_lines[1,:]
+                #r = coords_next[0]
+                
+                #dst_pts_line = dist_pt2line(arr_lines[0,:], arr_lines[1,:], coords_next[0])
+                
+                #dst_pts_line = distance.euclidean((coords[0] + coords[len(coords)-1])*0.5, coords_next[0])
+                
+                dst_pts_line = distance.euclidean((arr_lines[0,:] + arr_lines[1,:])*0.5, coords_next[0])
+                
+                dst_current_line =  distance.euclidean(arr_lines[0,:], arr_lines[1,:])
+                
+                dst_next_line =  distance.euclidean(arr_lines_next[0,:], arr_lines_next[1,:])
+
+                #print("dst_connection_pts {0}, dst_pts_line {1}:".format(dst_connection_pts, dst_pts_line))
+                
+                '''
+                p = np.array([0, 0, 0])
+                q = np.array([0, 0, 1])
+                r = np.array([0, 1, 1])
+                
+                dst_pts_line = dist_pt2line(p, q, r)
+                
+                print()
+                '''
                 
                 X_combine = np.hstack([X, X_next])
                 Y_combine = np.hstack([Y, Y_next])
@@ -1126,7 +1176,7 @@ def trace_connect(trace_array, array_index_rec, fit_linepts_rec):
                 
 
                 #if (angle_diff_vector < 20) and (pcm_diff < 105) and (dst_diff < 100):
-                if (angle_diff_vector < angle_connect_thresh) and (angle_diff_vector_2connect < angle_connect_thresh) :
+                if (angle_diff_vector < angle_connect_thresh) and (angle_diff_vector_2connect < angle_connect_thresh) and (dst_connection_pts > 0.5*dst_pts_line) and(dst_connection_pts < (dst_current_line + dst_next_line)):
 
                     index_pair = (index_value, index_value_next)
                     index_pair_rec.append(index_pair)
@@ -1146,11 +1196,13 @@ def trace_connect(trace_array, array_index_rec, fit_linepts_rec):
                     
                     connect_pts_rec.append(coords_connect_pts)
                     
+                    
                  
                     #print(connect_vector)
                     #print(connect_pts)
                     #print("Trace index {0} are connected by {1} points in 3D space...".format(index_pair, len(xLinespace)))
                     print("Trace index pair {} are connected in 3D space...".format(index_pair))
+                    #print("dst_connection_pts {0}, dst_pts_line {1}\n".format(dst_connection_pts, dst_pts_line))
                     
                     #print("Angle difference between lines: {0}, Angle difference between connected lines: {1}.\n".format(angle_diff_vector, angle_diff_vector_2connect))
             
@@ -1176,27 +1228,35 @@ if __name__ == '__main__':
     ap.add_argument("-v", "--visualize", required = False, default = False, type = bool, help = "Visualize result or not")
     args = vars(ap.parse_args())
 
+    global angle_connect_thresh, X_scale, Y_scale, Z_scale, text_size, \
+    length_thresh, save_path_result, camera_azimuth, camera_elevation, \
+    camera_distance, camera_focalpoint, tube_scale, interpolation_range_factor, directory_name
+    
     #extract csv trace result file 
     #trace_filetype = '*.csv' 
     file_path = args["path"]
     #accquire file list
     #trace_file_list = sorted(fnmatch.filter(os.listdir(args["path"]), trace_filetype))
     
+    directory_name = os.path.basename(os.path.dirname(file_path)) 
+    
+    #print("folder_name: {0} ...\n".format(directory_name))
+    
     fname = file_path + args["file"]
     
     #print(trace_file_list)  
     
-    global angle_connect_thresh, X_scale, Y_scale, Z_scale, text_size, length_thresh, save_path_result, camera_azimuth, camera_elevation, camera_distance, camera_focalpoint, tube_scale, interpolation_range_factor
+   
     
-    length_thresh = 0.6
+    length_thresh = 0.3
     
-    angle_connect_thresh = 40
+    angle_connect_thresh = 30
     
     X_scale = 2.0
     Y_scale = 2.0
     Z_scale = -2.5
     
-    text_size = 3
+    text_size = 8
     
     tube_scale = 0.5
     
@@ -1247,7 +1307,7 @@ if __name__ == '__main__':
     trace_array = trace_pd.to_numpy()
     
     # trait computation 
-    (index_rec, index_label_rec, fit_linepts_rec, indexes_length_remove) = trace_compute(trace_array, trace_index)
+    (index_rec, index_label_rec, fit_linepts_rec, indexes_length_remove,length_euclidean_rec) = trace_compute(trace_array, trace_index)
 
     #print("indexes_length_remove: {}".format(indexes_length_remove))
     
@@ -1256,8 +1316,10 @@ if __name__ == '__main__':
         del index_rec[index]
         del index_label_rec[index]
         del fit_linepts_rec[index]
+        del length_euclidean_rec[index]
     
-
+    
+    
     index_rec_arr = np.asarray(index_label_rec)
     
     #connect traces with similar angle and location
