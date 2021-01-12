@@ -893,7 +893,7 @@ if __name__ == '__main__':
     # construct the argument and parse the arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", required = True,    help = "path to image file")
-    ap.add_argument("-ft", "--filetype", required = False, default = 'jpg',   help = "Image filetype")
+    ap.add_argument("-ft", "--filetype", required = False, default = 'png',   help = "Image filetype")
     ap.add_argument("-th", "--threshold", required = False, default = '2.35', type = float, help = "threshold to remove outliers")
     args = vars(ap.parse_args())
 

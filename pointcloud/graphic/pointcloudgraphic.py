@@ -139,8 +139,8 @@ class PointCloudGraphic:
         
         self.imageDrawingList = []
         
-        #print(minKey)
-        #print(maxKey)
+        #print("minkey".format(minKey))
+        #print("maxKey".format(maxKey))
 
         while minKey <= maxKey:
             
